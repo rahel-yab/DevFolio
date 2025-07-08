@@ -1,11 +1,14 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,6 +19,9 @@ export default function LoginPage() {
       return;
     }
     setSuccess("Login submitted! (No real authentication yet)");
+    setTimeout(() => {
+      router.push("/");
+    }, 1000);
   };
 
   return (
