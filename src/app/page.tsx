@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function HomePage() {
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center p-8 bg-indigo-50 overflow-hidden">
@@ -17,9 +19,11 @@ export default function HomePage() {
           templates, AI-powered suggestions, and modern design to showcase your
           skills and projects effortlessly.
         </p>
-        <button className="px-8 py-3 bg-gradient-to-r from-indigo-400 to-blue-400 text-white rounded-lg text-lg font-semibold shadow hover:from-indigo-500 hover:to-blue-500 transition">
-          Get Started
-        </button>
+        <Link href="/templates">
+          <button className="px-8 py-3 bg-gradient-to-r from-indigo-400 to-blue-400 text-white rounded-lg text-lg font-semibold shadow hover:from-indigo-500 hover:to-blue-500 transition">
+            Get Started
+          </button>
+        </Link>
       </div>
     </main>
   );
