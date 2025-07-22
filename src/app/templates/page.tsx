@@ -1,3 +1,4 @@
+import Link from "next/link";
 import React from "react";
 
 const templateImages = [
@@ -51,9 +52,10 @@ export default function TemplatesPage() {
         </h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {templates.map((template, idx) => (
-            <div
+            <Link
               key={template.name}
-              className="bg-indigo-50 rounded-lg p-6 shadow hover:shadow-lg transition cursor-pointer flex flex-col items-center border border-indigo-100"
+              href={`/editor?template=${encodeURIComponent(template.name)}`}
+              className="bg-indigo-50 rounded-lg p-6 shadow hover:shadow-lg transition cursor-pointer flex flex-col items-center border border-indigo-100 hover:bg-indigo-100 focus:outline-none"
             >
               <div className="w-full mb-4 flex justify-center">
                 <img
@@ -68,7 +70,7 @@ export default function TemplatesPage() {
               <p className="text-gray-700 text-center text-sm mb-2">
                 {template.description}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
