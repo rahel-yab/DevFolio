@@ -27,14 +27,13 @@ func (h *PortfolioHandler) CreatePortfolio(c *gin.Context) {
 		return
 	}
 
-	// For now, we'll use a dummy user ID
-	// In a real application, you'd get this from JWT token or session
-	userID := c.GetHeader("X-User-ID")
-	if userID == "" {
-		userID = "default-user" // Temporary for development
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
 	}
 
-	portfolio, err := h.portfolioUsecase.CreatePortfolio(c.Request.Context(), &req, userID)
+	portfolio, err := h.portfolioUsecase.CreatePortfolio(c.Request.Context(), &req, userID.(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -56,12 +55,13 @@ func (h *PortfolioHandler) GetPortfolio(c *gin.Context) {
 }
 
 func (h *PortfolioHandler) GetUserPortfolios(c *gin.Context) {
-	userID := c.GetHeader("X-User-ID")
-	if userID == "" {
-		userID = "default-user" // Temporary for development
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
 	}
 
-	portfolios, err := h.portfolioUsecase.GetUserPortfolios(c.Request.Context(), userID)
+	portfolios, err := h.portfolioUsecase.GetUserPortfolios(c.Request.Context(), userID.(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -79,12 +79,13 @@ func (h *PortfolioHandler) UpdatePortfolio(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetHeader("X-User-ID")
-	if userID == "" {
-		userID = "default-user" // Temporary for development
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
 	}
 
-	portfolio, err := h.portfolioUsecase.UpdatePortfolio(c.Request.Context(), id, &req, userID)
+	portfolio, err := h.portfolioUsecase.UpdatePortfolio(c.Request.Context(), id, &req, userID.(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -96,12 +97,13 @@ func (h *PortfolioHandler) UpdatePortfolio(c *gin.Context) {
 func (h *PortfolioHandler) DeletePortfolio(c *gin.Context) {
 	id := c.Param("id")
 	
-	userID := c.GetHeader("X-User-ID")
-	if userID == "" {
-		userID = "default-user" // Temporary for development
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
 	}
 
-	if err := h.portfolioUsecase.DeletePortfolio(c.Request.Context(), id, userID); err != nil {
+	if err := h.portfolioUsecase.DeletePortfolio(c.Request.Context(), id, userID.(string)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -172,12 +174,13 @@ func (h *PortfolioHandler) EnhanceWithAI(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetHeader("X-User-ID")
-	if userID == "" {
-		userID = "default-user" // Temporary for development
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
 	}
 
-	portfolio, err := h.portfolioUsecase.EnhanceWithAI(c.Request.Context(), &req, userID)
+	portfolio, err := h.portfolioUsecase.EnhanceWithAI(c.Request.Context(), &req, userID.(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

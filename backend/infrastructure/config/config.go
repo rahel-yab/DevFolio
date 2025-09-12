@@ -13,6 +13,8 @@ type Config struct {
 	Server   ServerConfig   `mapstructure:"server"`
 	AI       AIConfig       `mapstructure:"ai"`
 	CORS     CORSConfig     `mapstructure:"cors"`
+	JWT      JWTConfig      `mapstructure:"jwt"`
+	Cookie   CookieConfig   `mapstructure:"cookie"`
 }
 
 type DatabaseConfig struct {
@@ -32,6 +34,18 @@ type AIConfig struct {
 
 type CORSConfig struct {
 	FrontendURL string `mapstructure:"frontend_url"`
+}
+
+type JWTConfig struct {
+	Secret        string `mapstructure:"secret"`
+	AccessExpiry  string `mapstructure:"access_expiry"`
+	RefreshExpiry string `mapstructure:"refresh_expiry"`
+}
+
+type CookieConfig struct {
+	Domain   string `mapstructure:"domain"`
+	Secure   bool   `mapstructure:"secure"`
+	SameSite string `mapstructure:"same_site"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -76,6 +90,11 @@ func setDefaults() {
 	viper.SetDefault("server.gin_mode", "release")
 	viper.SetDefault("ai.openai_model", "gpt-3.5-turbo")
 	viper.SetDefault("cors.frontend_url", "http://localhost:3000")
+	viper.SetDefault("jwt.access_expiry", "15m")
+	viper.SetDefault("jwt.refresh_expiry", "7d")
+	viper.SetDefault("cookie.domain", "localhost")
+	viper.SetDefault("cookie.secure", false)
+	viper.SetDefault("cookie.same_site", "lax")
 }
 
 func overrideWithEnvVars() {
@@ -99,5 +118,23 @@ func overrideWithEnvVars() {
 	}
 	if url := os.Getenv("FRONTEND_URL"); url != "" {
 		viper.Set("cors.frontend_url", url)
+	}
+	if secret := os.Getenv("JWT_SECRET"); secret != "" {
+		viper.Set("jwt.secret", secret)
+	}
+	if expiry := os.Getenv("JWT_ACCESS_EXPIRY"); expiry != "" {
+		viper.Set("jwt.access_expiry", expiry)
+	}
+	if expiry := os.Getenv("JWT_REFRESH_EXPIRY"); expiry != "" {
+		viper.Set("jwt.refresh_expiry", expiry)
+	}
+	if domain := os.Getenv("COOKIE_DOMAIN"); domain != "" {
+		viper.Set("cookie.domain", domain)
+	}
+	if secure := os.Getenv("COOKIE_SECURE"); secure != "" {
+		viper.Set("cookie.secure", secure == "true")
+	}
+	if sameSite := os.Getenv("COOKIE_SAME_SITE"); sameSite != "" {
+		viper.Set("cookie.same_site", sameSite)
 	}
 }

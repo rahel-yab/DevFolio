@@ -27,6 +27,8 @@ backend/
 ## Features
 
 - **Clean Architecture**: Separation of concerns with clear dependency boundaries
+- **JWT Authentication**: Secure authentication with access and refresh tokens
+- **HTTP-Only Cookies**: Refresh tokens stored securely in HTTP-only cookies
 - **MongoDB Integration**: Document-based storage for portfolio data
 - **AI Enhancement**: OpenAI integration for portfolio content generation
 - **RESTful API**: Well-structured HTTP endpoints
@@ -80,6 +82,12 @@ The application uses Viper for configuration management. You can configure the a
 - `OPENAI_API_KEY`: OpenAI API key for AI features
 - `OPENAI_MODEL`: OpenAI model to use (default: gpt-3.5-turbo)
 - `FRONTEND_URL`: Frontend URL for CORS (default: http://localhost:3000)
+- `JWT_SECRET`: Secret key for JWT token signing
+- `JWT_ACCESS_EXPIRY`: Access token expiry duration (default: 15m)
+- `JWT_REFRESH_EXPIRY`: Refresh token expiry duration (default: 7d)
+- `COOKIE_DOMAIN`: Domain for HTTP-only cookies (default: localhost)
+- `COOKIE_SECURE`: Whether cookies should be secure (default: false)
+- `COOKIE_SAME_SITE`: SameSite policy for cookies (default: lax)
 
 ## Running the Application
 
@@ -105,15 +113,24 @@ make docker-run
 ### Health Check
 - `GET /health` - Health check endpoint
 
+### Authentication
+- `POST /api/v1/auth/register` - Register new user
+- `POST /api/v1/auth/login` - Login user
+- `POST /api/v1/auth/refresh` - Refresh access token
+- `POST /api/v1/auth/logout` - Logout user (requires auth)
+- `GET /api/v1/auth/profile` - Get user profile (requires auth)
+- `PUT /api/v1/auth/profile` - Update user profile (requires auth)
+- `PUT /api/v1/auth/change-password` - Change password (requires auth)
+
 ### Portfolios
-- `POST /api/v1/portfolios` - Create a new portfolio
-- `GET /api/v1/portfolios/user` - Get user's portfolios
+- `POST /api/v1/portfolios` - Create a new portfolio (requires auth)
+- `GET /api/v1/portfolios/user` - Get user's portfolios (requires auth)
 - `GET /api/v1/portfolios/public` - Get public portfolios
 - `GET /api/v1/portfolios/search` - Search portfolios
 - `GET /api/v1/portfolios/:id` - Get portfolio by ID
-- `PUT /api/v1/portfolios/:id` - Update portfolio
-- `DELETE /api/v1/portfolios/:id` - Delete portfolio
-- `POST /api/v1/portfolios/enhance` - Enhance portfolio with AI
+- `PUT /api/v1/portfolios/:id` - Update portfolio (requires auth)
+- `DELETE /api/v1/portfolios/:id` - Delete portfolio (requires auth)
+- `POST /api/v1/portfolios/enhance` - Enhance portfolio with AI (requires auth)
 
 ## Database Setup
 
@@ -155,15 +172,18 @@ make swagger
 
 ### Use Case Layer
 - **Portfolio Use Case**: Business logic for portfolio operations
+- **Auth Use Case**: Authentication and user management logic
 - **AI Enhancement**: Logic for AI-powered content generation
 
 ### Infrastructure Layer
 - **Database**: MongoDB connection and operations
+- **Auth**: JWT token management and password hashing
 - **AI**: OpenAI client integration
 - **Config**: Configuration management with Viper
 
 ### Controller Layer
 - **Delivery**: HTTP handlers for API endpoints
+- **Middleware**: Authentication middleware for protected routes
 - **Routes**: Route definitions and middleware setup
 
 ## AI Features
@@ -173,6 +193,26 @@ The backend integrates with OpenAI to provide:
 1. **Portfolio Content Enhancement**: Improve bio and descriptions
 2. **Project Description Generation**: Generate compelling project descriptions
 3. **Content Suggestions**: AI-powered suggestions for portfolio improvement
+
+## Authentication Flow
+
+1. **Registration/Login**: User provides credentials
+2. **Token Generation**: Server generates access token (15min) and refresh token (7 days)
+3. **Token Storage**: 
+   - Access token sent in response body
+   - Refresh token stored in HTTP-only cookie
+4. **API Requests**: Client sends access token in Authorization header
+5. **Token Refresh**: When access token expires, client uses refresh endpoint
+6. **Logout**: Server clears refresh token cookie
+
+## Security Features
+
+- **Password Hashing**: bcrypt with cost factor 12
+- **JWT Tokens**: Signed with HMAC-SHA256
+- **HTTP-Only Cookies**: Refresh tokens not accessible via JavaScript
+- **CORS Protection**: Configured for specific frontend origin
+- **Input Validation**: Request validation with Gin binding
+- **Soft Delete**: Users are deactivated, not permanently deleted
 
 ## Contributing
 

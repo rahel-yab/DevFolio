@@ -2,7 +2,9 @@ package routes
 
 import (
 	"devfolio-backend/controller/delivery"
+	"devfolio-backend/controller/middleware"
 	"devfolio-backend/infrastructure/config"
+	"devfolio-backend/infrastructure/auth"
 	
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -10,6 +12,8 @@ import (
 
 func SetupRoutes(
 	portfolioHandler *delivery.PortfolioHandler,
+	authHandler *delivery.AuthHandler,
+	jwtManager *auth.JWTManager,
 	cfg *config.Config,
 ) *gin.Engine {
 	// Set Gin mode
@@ -34,17 +38,42 @@ func SetupRoutes(
 	// API v1 routes
 	v1 := router.Group("/api/v1")
 	{
+		// Auth routes (public)
+		auth := v1.Group("/auth")
+		{
+			auth.POST("/register", authHandler.Register)
+			auth.POST("/login", authHandler.Login)
+			auth.POST("/refresh", authHandler.RefreshToken)
+		}
+
+		// Protected auth routes
+		authProtected := v1.Group("/auth")
+		authProtected.Use(middleware.AuthMiddleware(jwtManager))
+		{
+			authProtected.POST("/logout", authHandler.Logout)
+			authProtected.GET("/profile", authHandler.GetProfile)
+			authProtected.PUT("/profile", authHandler.UpdateProfile)
+			authProtected.PUT("/change-password", authHandler.ChangePassword)
+		}
+
 		// Portfolio routes
 		portfolios := v1.Group("/portfolios")
+		portfolios.Use(middleware.OptionalAuthMiddleware(jwtManager)) // Some endpoints allow optional auth
 		{
-			portfolios.POST("", portfolioHandler.CreatePortfolio)
-			portfolios.GET("/user", portfolioHandler.GetUserPortfolios)
 			portfolios.GET("/public", portfolioHandler.GetPublicPortfolios)
 			portfolios.GET("/search", portfolioHandler.SearchPortfolios)
 			portfolios.GET("/:id", portfolioHandler.GetPortfolio)
-			portfolios.PUT("/:id", portfolioHandler.UpdatePortfolio)
-			portfolios.DELETE("/:id", portfolioHandler.DeletePortfolio)
-			portfolios.POST("/enhance", portfolioHandler.EnhanceWithAI)
+		}
+
+		// Protected portfolio routes
+		portfoliosProtected := v1.Group("/portfolios")
+		portfoliosProtected.Use(middleware.AuthMiddleware(jwtManager))
+		{
+			portfoliosProtected.POST("", portfolioHandler.CreatePortfolio)
+			portfoliosProtected.GET("/user", portfolioHandler.GetUserPortfolios)
+			portfoliosProtected.PUT("/:id", portfolioHandler.UpdatePortfolio)
+			portfoliosProtected.DELETE("/:id", portfolioHandler.DeletePortfolio)
+			portfoliosProtected.POST("/enhance", portfolioHandler.EnhanceWithAI)
 		}
 	}
 
