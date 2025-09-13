@@ -233,10 +233,3 @@ The application includes AI-powered features:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For support and questions:
-- Create an issue on GitHub
-- Check the documentation in each service directory
-- Review the API documentation at `/health` endpoint
