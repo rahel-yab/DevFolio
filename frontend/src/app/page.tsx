@@ -37,7 +37,7 @@ export default function HomePage() {
                   Start Building Now
                 </button>
               </Link>
-              <Link href="/dashboard">
+              <Link href="/templates">
                 <button className="px-8 py-4 border-2 border-indigo-600 text-indigo-600 rounded-xl text-lg font-semibold hover:bg-indigo-600 hover:text-white transition-all duration-200">
                   View Examples
                 </button>

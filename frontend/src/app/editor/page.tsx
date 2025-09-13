@@ -1,10 +1,13 @@
 "use client";
-import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useAuth } from "../../hooks/useAuth";
+import { apiService } from "../../services/api";
 
 export default function EditorPage() {
-  // Get the selected template from the URL
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const template = searchParams.get("template");
 
@@ -26,6 +29,98 @@ export default function EditorPage() {
   const [projects, setProjects] = useState([
     { name: "", description: "", technologies: "", link: "", github: "" },
   ]);
+
+  // Loading and saving states
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  // Populate form with user data
+  useEffect(() => {
+    if (user) {
+      setName(`${user.first_name} ${user.last_name}`);
+      setEmail(user.email);
+      setBio(user.bio || "");
+      setPhone(user.phone || "");
+      setLocation(user.location || "");
+      setWebsite(user.website || "");
+    }
+  }, [user]);
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isAuthenticated) return;
+
+    setIsSaving(true);
+    setMessage("");
+
+    try {
+      // Transform the form data to match backend structure
+      const portfolioData = {
+        name: name,
+        title: title,
+        bio: bio,
+        email: email,
+        phone: phone,
+        location: location,
+        website: website,
+        linkedin: user?.linkedin || "",
+        github: user?.github || "",
+        skills: skills.filter(skill => skill.trim() !== ""),
+        experience: experience.map(exp => ({
+          company: exp.company,
+          role: exp.role,
+          start_date: new Date().toISOString(),
+          end_date: undefined,
+          description: exp.description,
+          location: "",
+          is_current: false
+        })),
+        education: education.map(edu => ({
+          school: edu.school,
+          degree: edu.degree,
+          field: "",
+          start_date: new Date().toISOString(),
+          end_date: undefined,
+          gpa: edu.gpa,
+          description: ""
+        })),
+        projects: projects.map(proj => ({
+          name: proj.name,
+          description: proj.description,
+          tech_stack: proj.technologies.split(",").map(t => t.trim()).filter(t => t),
+          link: proj.link,
+          github_link: proj.github,
+          image_url: "",
+          start_date: new Date().toISOString(),
+          end_date: undefined,
+          featured: false
+        })),
+        template: template || "modern"
+      };
+
+      const portfolio = await apiService.createPortfolio(portfolioData);
+      setMessage("Portfolio saved successfully!");
+      
+      // Redirect to dashboard after successful save
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 2000);
+      
+    } catch (error) {
+      setMessage("Failed to save portfolio. Please try again.");
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setMessage(""), 5000);
+    }
+  };
 
   // Handlers for skills
   const handleSkillChange = (idx: number, value: string) => {
@@ -80,28 +175,13 @@ export default function EditorPage() {
     }
   };
 
-  // For now, just log the data on submit
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // This is where you'd send data to the backend
-    console.log({
-      name,
-      title,
-      email,
-      phone,
-      location,
-      website,
-      bio,
-      skills: skills.filter(skill => skill.trim() !== ""),
-      experience,
-      education,
-      projects,
-      template,
-    });
-    alert(
-      "Portfolio data logged to console! (Backend integration coming soon)"
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
     );
-  };
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -455,13 +535,25 @@ export default function EditorPage() {
                 </div>
               </div>
 
+              {/* Success/Error Message */}
+              {message && (
+                <div className={`p-3 rounded-lg mb-6 ${
+                  message.includes("successfully") 
+                    ? "bg-green-50 border border-green-200 text-green-600" 
+                    : "bg-red-50 border border-red-200 text-red-600"
+                }`}>
+                  {message}
+                </div>
+              )}
+
               {/* Submit Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 pt-6">
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                  disabled={isSaving}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  Save Resume
+                  {isSaving ? "Saving..." : "Save Resume"}
                 </button>
                 <button
                   type="button"
@@ -612,7 +704,7 @@ function PortfolioPreview({
         <div>
           <h3 className="text-lg font-bold text-gray-900 mb-3">Work Experience</h3>
           {experience.filter((e) => e.company || e.role || e.years).length === 0 ? (
-            <p className="text-gray-400 italic">No experience added yet.</p>
+            <p className="text-gray-600 italic">No experience added yet.</p>
           ) : (
             <div className="space-y-4">
               {experience.map((exp, idx) => (
@@ -639,7 +731,7 @@ function PortfolioPreview({
         <div>
           <h3 className="text-lg font-bold text-gray-900 mb-3">Education</h3>
           {education.filter((e) => e.school || e.degree || e.years).length === 0 ? (
-            <p className="text-gray-400 italic">No education added yet.</p>
+            <p className="text-gray-600 italic">No education added yet.</p>
           ) : (
             <div className="space-y-4">
               {education.map((edu, idx) => (
@@ -666,7 +758,7 @@ function PortfolioPreview({
         <div>
           <h3 className="text-lg font-bold text-gray-900 mb-3">Projects</h3>
           {projects.filter((p) => p.name || p.description).length === 0 ? (
-            <p className="text-gray-400 italic">No projects added yet.</p>
+            <p className="text-gray-600 italic">No projects added yet.</p>
           ) : (
             <div className="space-y-4">
               {projects.map((proj, idx) => (

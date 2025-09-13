@@ -154,6 +154,24 @@ func (u *authUsecase) UpdateProfile(ctx context.Context, userID string, req *ent
 	if req.Avatar != nil {
 		user.Avatar = *req.Avatar
 	}
+	if req.Bio != nil {
+		user.Bio = *req.Bio
+	}
+	if req.Phone != nil {
+		user.Phone = *req.Phone
+	}
+	if req.Location != nil {
+		user.Location = *req.Location
+	}
+	if req.Website != nil {
+		user.Website = *req.Website
+	}
+	if req.LinkedIn != nil {
+		user.LinkedIn = *req.LinkedIn
+	}
+	if req.GitHub != nil {
+		user.GitHub = *req.GitHub
+	}
 
 	if err := u.userRepo.Update(ctx, objectID, user); err != nil {
 		return nil, fmt.Errorf("failed to update profile: %w", err)

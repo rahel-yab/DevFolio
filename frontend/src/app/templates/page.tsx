@@ -68,7 +68,7 @@ export default function TemplatesPage() {
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
               Select from our professionally designed templates, each crafted to highlight your unique skills and experience.
             </p>
-            <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500">
+            <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
               <span className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 ATS-Friendly
@@ -139,7 +139,7 @@ export default function TemplatesPage() {
                     {/* CTA */}
                     <div className="pt-4">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">Click to customize</span>
+                        <span className="text-sm text-gray-600">Click to customize</span>
                         <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center group-hover:bg-indigo-600 transition-colors">
                           <svg className="w-4 h-4 text-indigo-600 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

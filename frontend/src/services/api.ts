@@ -11,6 +11,12 @@ export interface User {
   last_login_at?: string;
   created_at: string;
   updated_at: string;
+  bio?: string;
+  phone?: string;
+  location?: string;
+  website?: string;
+  linkedin?: string;
+  github?: string;
 }
 
 export interface Experience {

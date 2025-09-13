@@ -11,20 +11,16 @@ export default function Footer() {
           <div className="md:col-span-2">
             <Link href="/" className="flex items-center space-x-3 mb-4">
               <div className="relative">
-                <Image 
-                  src="/logo.png" 
-                  alt="DevFolio Logo" 
-                  width={40} 
-                  height={40} 
-                  className="rounded-lg"
-                />
+                <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">D</span>
+                </div>
                 <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg blur opacity-30"></div>
               </div>
               <span className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
                 DevFolio
               </span>
             </Link>
-            <p className="text-gray-300 mb-6 max-w-md">
+            <p className="text-gray-200 mb-6 max-w-md">
               Create stunning developer portfolios and resumes in minutes with AI-powered content enhancement and professional templates.
             </p>
             <div className="flex space-x-4">
@@ -62,22 +58,22 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/" className="text-gray-200 hover:text-white transition-colors">
                   Home
                 </Link>
               </li>
               <li>
-                <Link href="/templates" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/templates" className="text-gray-200 hover:text-white transition-colors">
                   Templates
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/dashboard" className="text-gray-200 hover:text-white transition-colors">
                   Dashboard
                 </Link>
               </li>
               <li>
-                <Link href="/editor" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/editor" className="text-gray-200 hover:text-white transition-colors">
                   Resume Builder
                 </Link>
               </li>
@@ -89,22 +85,22 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">Support</h3>
             <ul className="space-y-3">
               <li>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors">
+                <a href="#" className="text-gray-200 hover:text-white transition-colors">
                   Help Center
                 </a>
               </li>
               <li>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors">
+                <a href="#" className="text-gray-200 hover:text-white transition-colors">
                   Contact Us
                 </a>
               </li>
               <li>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors">
+                <a href="#" className="text-gray-200 hover:text-white transition-colors">
                   Privacy Policy
                 </a>
               </li>
               <li>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors">
+                <a href="#" className="text-gray-200 hover:text-white transition-colors">
                   Terms of Service
                 </a>
               </li>
@@ -114,10 +110,10 @@ export default function Footer() {
 
         {/* Bottom Section */}
         <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <div className="text-gray-400 text-sm mb-4 md:mb-0">
+          <div className="text-gray-300 text-sm mb-4 md:mb-0">
             © {new Date().getFullYear()} DevFolio. Built with ❤️ by Rahel Yabebal. All rights reserved.
           </div>
-          <div className="flex items-center space-x-6 text-sm text-gray-400">
+          <div className="flex items-center space-x-6 text-sm text-gray-300">
             <span>Made with Next.js & Tailwind CSS</span>
             <span>•</span>
             <a

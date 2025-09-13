@@ -12,6 +12,12 @@ type User struct {
 	FirstName    string            `json:"first_name" bson:"first_name"`
 	LastName     string            `json:"last_name" bson:"last_name"`
 	Avatar       string            `json:"avatar" bson:"avatar"`
+	Bio          string            `json:"bio" bson:"bio"`
+	Phone        string            `json:"phone" bson:"phone"`
+	Location     string            `json:"location" bson:"location"`
+	Website      string            `json:"website" bson:"website"`
+	LinkedIn     string            `json:"linkedin" bson:"linkedin"`
+	GitHub       string            `json:"github" bson:"github"`
 	IsVerified   bool              `json:"is_verified" bson:"is_verified"`
 	IsActive     bool              `json:"is_active" bson:"is_active"`
 	LastLoginAt  *time.Time        `json:"last_login_at,omitempty" bson:"last_login_at,omitempty"`
@@ -48,6 +54,12 @@ type UpdateProfileRequest struct {
 	FirstName *string `json:"first_name,omitempty"`
 	LastName  *string `json:"last_name,omitempty"`
 	Avatar    *string `json:"avatar,omitempty"`
+	Bio       *string `json:"bio,omitempty"`
+	Phone     *string `json:"phone,omitempty"`
+	Location  *string `json:"location,omitempty"`
+	Website   *string `json:"website,omitempty"`
+	LinkedIn  *string `json:"linkedin,omitempty"`
+	GitHub    *string `json:"github,omitempty"`
 }
 
 type ChangePasswordRequest struct {
@@ -62,6 +74,12 @@ type UserResponse struct {
 	FirstName   string            `json:"first_name"`
 	LastName    string            `json:"last_name"`
 	Avatar      string            `json:"avatar"`
+	Bio         string            `json:"bio"`
+	Phone       string            `json:"phone"`
+	Location    string            `json:"location"`
+	Website     string            `json:"website"`
+	LinkedIn    string            `json:"linkedin"`
+	GitHub      string            `json:"github"`
 	IsVerified  bool              `json:"is_verified"`
 	LastLoginAt *time.Time        `json:"last_login_at,omitempty"`
 	CreatedAt   time.Time         `json:"created_at"`
@@ -75,6 +93,12 @@ func (u *User) ToResponse() *UserResponse {
 		FirstName:   u.FirstName,
 		LastName:    u.LastName,
 		Avatar:      u.Avatar,
+		Bio:         u.Bio,
+		Phone:       u.Phone,
+		Location:    u.Location,
+		Website:     u.Website,
+		LinkedIn:    u.LinkedIn,
+		GitHub:      u.GitHub,
 		IsVerified:  u.IsVerified,
 		LastLoginAt: u.LastLoginAt,
 		CreatedAt:   u.CreatedAt,
