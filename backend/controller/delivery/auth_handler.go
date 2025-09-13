@@ -173,14 +173,6 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 func (h *AuthHandler) setRefreshTokenCookie(c *gin.Context, refreshToken string) {
 	// Parse refresh token TTL
 	refreshTTL, _ := time.ParseDuration(h.config.JWT.RefreshExpiry)
-	
-	sameSite := http.SameSiteLaxMode
-	switch h.config.Cookie.SameSite {
-	case "strict":
-		sameSite = http.SameSiteStrictMode
-	case "none":
-		sameSite = http.SameSiteNoneMode
-	}
 
 	c.SetCookie(
 		"refresh_token",           // name
@@ -190,19 +182,10 @@ func (h *AuthHandler) setRefreshTokenCookie(c *gin.Context, refreshToken string)
 		h.config.Cookie.Domain,    // domain
 		h.config.Cookie.Secure,    // secure
 		true,                      // httpOnly
-		sameSite,                  // sameSite
 	)
 }
 
 func (h *AuthHandler) clearRefreshTokenCookie(c *gin.Context) {
-	sameSite := http.SameSiteLaxMode
-	switch h.config.Cookie.SameSite {
-	case "strict":
-		sameSite = http.SameSiteStrictMode
-	case "none":
-		sameSite = http.SameSiteNoneMode
-	}
-
 	c.SetCookie(
 		"refresh_token",        // name
 		"",                     // value
@@ -211,6 +194,5 @@ func (h *AuthHandler) clearRefreshTokenCookie(c *gin.Context) {
 		h.config.Cookie.Domain, // domain
 		h.config.Cookie.Secure, // secure
 		true,                   // httpOnly
-		sameSite,               // sameSite
 	)
 }
