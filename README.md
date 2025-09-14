@@ -99,5 +99,5 @@ Open `http://localhost:3000` to start building your portfolio!
 contributions are welcome! If you discover a bug or have a feature request, feel free to open an issue or submit a pull request.
 
 <div align="center">
-  <p>DevFolio - Empowering developers to showcase their best work</p>
+  <p>DevFolio - Ready.set.portfolio! </p>
 </div>
