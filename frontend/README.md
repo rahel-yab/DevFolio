@@ -3,7 +3,21 @@
 
 - ✨ Modern React UI with Tailwind CSS
 - ⚡ Fast navigation using Next.js App Router
-- 🗂️ Dashboard to manage your portfolio 
+- 🗂️ Dashboard to manage your portfolio
+
+## 📸 Application Screenshots
+
+<div align="center">
+ <img width="1867" height="885" alt="Image" src="https://github.com/user-attachments/assets/d79a8684-456a-49bb-90ec-e05599c9495a" />
+</div>
+
+<div align="center">
+<img width="1413" height="772" alt="Image" src="https://github.com/user-attachments/assets/db5887ef-378d-4b6c-8426-50eeae8f3b41" />
+</div>
+
+<div align="center">
+<img width="1887" height="780" alt="Image" src="https://github.com/user-attachments/assets/e8145748-805d-48bd-8ee5-8efed302ecd9" />
+</div>
 
 ## Getting Started
 
