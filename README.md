@@ -29,7 +29,7 @@ DevFolio transforms the tedious process of portfolio creation into an enjoyable,
 ## 📸 Application Screenshots
 
 <div align="center">
-  <img src="./screenshots/landing-page.png" alt="DevFolio Landing Page" width="800"/>
+  <img src="" width="800"/>
   <p><em>Modern landing page with clear call-to-action</em></p>
 </div>
 
@@ -103,19 +103,8 @@ Open `http://localhost:3000` to start building your portfolio!
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
----
+contributions are welcome! If you discover a bug or have a feature request, feel free to open an issue or submit a pull request.
 
 <div align="center">
-  <p><strong>Built with ❤️ by developers, for developers</strong></p>
   <p>DevFolio - Empowering developers to showcase their best work</p>
 </div>
