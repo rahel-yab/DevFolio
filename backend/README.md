@@ -1,7 +1,5 @@
 # DevFolio Backend
 
-A Go-based backend service for the DevFolio AI-powered developer portfolio builder, following clean architecture principles.
-
 ## Architecture
 
 This project follows Clean Architecture principles with the following structure:
@@ -82,12 +80,6 @@ The application uses Viper for configuration management. You can configure the a
 - `OPENAI_API_KEY`: OpenAI API key for AI features
 - `OPENAI_MODEL`: OpenAI model to use (default: gpt-3.5-turbo)
 - `FRONTEND_URL`: Frontend URL for CORS (default: http://localhost:3000)
-- `JWT_SECRET`: Secret key for JWT token signing
-- `JWT_ACCESS_EXPIRY`: Access token expiry duration (default: 15m)
-- `JWT_REFRESH_EXPIRY`: Refresh token expiry duration (default: 7d)
-- `COOKIE_DOMAIN`: Domain for HTTP-only cookies (default: localhost)
-- `COOKIE_SECURE`: Whether cookies should be secure (default: false)
-- `COOKIE_SAME_SITE`: SameSite policy for cookies (default: lax)
 
 ## Running the Application
 
@@ -213,14 +205,3 @@ The backend integrates with OpenAI to provide:
 - **CORS Protection**: Configured for specific frontend origin
 - **Input Validation**: Request validation with Gin binding
 - **Soft Delete**: Users are deactivated, not permanently deleted
-
-## Contributing
-
-1. Follow Go best practices and conventions
-2. Maintain clean architecture principles
-3. Add tests for new features
-4. Update documentation as needed
-
-## License
-
-This project is licensed under the MIT License.
