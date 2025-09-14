@@ -3,8 +3,7 @@
 
 - ✨ Modern React UI with Tailwind CSS
 - ⚡ Fast navigation using Next.js App Router
-- 🗂️ Dashboard to manage your portfolio (more features coming soon)
-- 📝 Planned: Form handling, authentication, and AI-powered suggestions
+- 🗂️ Dashboard to manage your portfolio 
 
 ## Getting Started
 
