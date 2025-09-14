@@ -1,6 +1,3 @@
-# DevFolio – AI-powered Developer Portfolio Builder
-
-DevFolio is a modern web app that helps developers quickly build and showcase their portfolios. Powered by Next.js, React, and (soon) AI, it offers a beautiful, customizable experience for developers of all backgrounds.
 
 ## Features
 
