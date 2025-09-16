@@ -12,10 +12,6 @@
 </div>
 
 <div align="center">
-<img width="1413" height="772" alt="Image" src="https://github.com/user-attachments/assets/db5887ef-378d-4b6c-8426-50eeae8f3b41" />
-</div>
-
-<div align="center">
 <img width="1887" height="780" alt="Image" src="https://github.com/user-attachments/assets/e8145748-805d-48bd-8ee5-8efed302ecd9" />
 </div>
 
