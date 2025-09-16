@@ -2,7 +2,7 @@
 
 <div align="center">
   <img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js" alt="Next.js" />
-  <img src="https://img.shields.io/badge/Go-1.21-00ADD8?style=for-the-badge&logo=go" alt="Go" />
+  <img src="https://img.shields.io/badge/Go-1.24-00ADD8?style=for-the-badge&logo=go" alt="Go" />
   <img src="https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB" />
   <img src="https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white" alt="OpenAI" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -22,19 +22,9 @@ DevFolio transforms the tedious process of portfolio creation into an enjoyable,
 - **🎨 Professional Templates** - Choose from carefully crafted, responsive designs
 - **⚡ Real-time Preview** - See your changes instantly as you build
 - **🤖 AI Enhancement** - Leverage OpenAI to improve your content
-- **📱 Mobile-First Design** - Looks perfect on all devices
 - **🔒 Secure Authentication** - Complete user management system
 - **📊 Portfolio Management** - Dashboard to organize all your portfolios
 
-
-## ✨ Key Features
-
-- **🎨 Portfolio Builder** - Create professional portfolios with guided forms
-- **⚡ Live Preview** - Real-time preview as you edit
-- **🤖 AI Enhancement** - OpenAI-powered content optimization
-- **🔒 User Management** - Secure authentication and profile system
-- **📊 Dashboard** - Manage multiple portfolios from one place
-- **📱 Responsive Design** - Perfect on all devices
 
 ## 🛠️ Tech Stack
 
