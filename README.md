@@ -36,7 +36,7 @@ DevFolio transforms the tedious process of portfolio creation into an enjoyable,
 
 ### Prerequisites
 - **Node.js** 18+ and npm
-- **Go** 1.21+
+- **Go** 1.24
 - **MongoDB** (local or cloud instance)
 - **OpenAI API Key** for AI features
 
