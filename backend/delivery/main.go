@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 
-	"devfolio-backend/controller/delivery"
 	"devfolio-backend/controller/routes"
 	"devfolio-backend/infrastructure/ai"
 	"devfolio-backend/infrastructure/auth"
