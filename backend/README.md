@@ -6,22 +6,32 @@ This project follows Clean Architecture principles with the following structure:
 
 ```
 backend/
-├── controller/          # HTTP handlers and 
-routing
-│   ├── routes/         # Route definitions
-├── delivery/       # HTTP request/response handlers
-│   └── main.go         # Application entry point
-├── usecase/            # Business logic layer
-├── domain/             # Core business entities and interfaces
-│   ├── entities/       # Domain models
-│   └── repositories/   # Repository interfaces
-├── repositories/       # Repository implementations
-├── infrastructure/     # External dependencies
-│   ├── config/         # Configuration management
-│   ├── database/       # Database connections
-│   └── ai/            # AI service integrations
-│   └── middleware/    # auth_middleware service
-└── config/            # Configuration files
+├── delivery/           # Application layer (HTTP handlers and main)
+│   ├── main.go        # Application entry point
+│   ├── controller/    # HTTP request/response handlers
+│   │   ├── auth_handler.go
+│   │   └── portfolio_handler.go
+│   └── router/        # Route definitions and middleware setup
+│       └── routes.go
+├── usecase/           # Business logic layer
+│   ├── auth_usecase.go
+│   └── portfolio_usecase.go
+├── domain/            # Core business entities and interfaces
+│   ├── entities/      # Domain models
+│   │   ├── user.go
+│   │   └── portfolio.go
+│   └── repositories/  # Repository interfaces
+│       ├── user_repository.go
+│       └── portfolio_repository.go
+├── repositories/      # Repository implementations
+│   ├── user_repository.go
+│   └── portfolio_repository.go
+└── infrastructure/    # External dependencies
+    ├── config/        # Configuration management
+    ├── database/      # Database connections
+    ├── auth/          # JWT and password management
+    ├── ai/           # AI service integrations
+    └── middleware/   # Authentication middleware
 ```
 
 ## Features
@@ -34,7 +44,17 @@ routing
 - **RESTful API**: Well-structured HTTP endpoints
 - **Configuration Management**: Viper-based config with environment variable support
 - **CORS Support**: Cross-origin resource sharing for frontend integration
-- **Hot Reload**: Air integration for development
+- **Package Organization**: Clear separation between delivery, usecase, domain, and infrastructure layers
+
+## Package Organization
+
+The project follows Go best practices with clear package boundaries:
+
+- **`delivery/`**: Application layer containing HTTP handlers, routing, and main entry point
+- **`usecase/`**: Business logic layer with use cases for different domains
+- **`domain/`**: Core business entities and repository interfaces
+- **`repositories/`**: Concrete implementations of repository interfaces
+- **`infrastructure/`**: External dependencies like database, auth, AI, and middleware
 
 ## Prerequisites
 
@@ -45,16 +65,19 @@ routing
 ## Installation
 
 1. Clone the repository and navigate to the backend directory:
+
 ```bash
 cd backend
 ```
 
 2. Install dependencies:
+
 ```bash
 go mod tidy
 ```
 
 3. Set up environment variables:
+
 ```bash
 cp .env.example .env
 # Edit .env with your configuration
@@ -79,13 +102,28 @@ The application uses Viper for configuration management. You can configure the a
 - `FRONTEND_URL`: Frontend URL for CORS (default: http://localhost:3000)
 
 ## Running the Application
+
+### Development Mode
+
 ```bash
+# From the backend directory
 go run delivery/main.go
+```
+
+### Build and Run
+
+```bash
+# Build the application
+go build -o bin/devfolio delivery/main.go
+
+# Run the binary
+./bin/devfolio
 ```
 
 ## API Endpoints
 
 ### Authentication
+
 - `POST /api/v1/auth/register` - Register new user
 - `POST /api/v1/auth/login` - Login user
 - `POST /api/v1/auth/refresh` - Refresh access token
@@ -95,6 +133,7 @@ go run delivery/main.go
 - `PUT /api/v1/auth/change-password` - Change password (requires auth)
 
 ### Portfolios
+
 - `POST /api/v1/portfolios` - Create a new portfolio (requires auth)
 - `GET /api/v1/portfolios/user` - Get user's portfolios (requires auth)
 - `GET /api/v1/portfolios/public` - Get public portfolios
@@ -106,31 +145,37 @@ go run delivery/main.go
 
 ## Database Setup
 
-
 ### MongoDB Atlas
+
 Set your MongoDB Atlas connection string in the `MONGODB_URI` environment variable.
 
 ## Project Structure Details
 
-### Domain Layer
-- **Entities**: Core business models (Portfolio, Experience, Education, Project)
-- **Repositories**: Interfaces for data access
+### Domain Layer (`domain/`)
 
-### Use Case Layer
-- **Portfolio Use Case**: Business logic for portfolio operations
-- **Auth Use Case**: Authentication and user management logic
-- **AI Enhancement**: Logic for AI-powered content generation
+- **Entities**: Core business models (User, Portfolio, Experience, Education, Project)
+- **Repository Interfaces**: Contracts for data access operations
 
-### Infrastructure Layer
-- **Database**: MongoDB connection and operations
-- **Auth**: JWT token management and password hashing
-- **AI**: OpenAI client integration
-- **Config**: Configuration management with Viper
+### Use Case Layer (`usecase/`)
 
-### Controller Layer
-- **Delivery**: HTTP handlers for API endpoints
-- **Middleware**: Authentication middleware for protected routes
-- **Routes**: Route definitions and middleware setup
+- **Auth Use Case**: User registration, login, profile management, and authentication logic
+- **Portfolio Use Case**: Portfolio CRUD operations, AI enhancement, and search functionality
+
+### Infrastructure Layer (`infrastructure/`)
+
+- **Database**: MongoDB connection and database operations
+- **Auth**: JWT token management, password hashing, and validation
+- **AI**: OpenAI client integration for content enhancement
+- **Config**: Configuration management with Viper and environment variables
+- **Middleware**: Authentication and CORS middleware
+
+### Delivery Layer (`delivery/`)
+
+- **Main**: Application entry point and dependency injection
+- **Controllers**: HTTP request/response handlers for API endpoints
+  - `auth_handler.go`: Authentication endpoints (register, login, profile, etc.)
+  - `portfolio_handler.go`: Portfolio management endpoints
+- **Router**: Route definitions, middleware setup, and CORS configuration
 
 ## AI Features
 
@@ -144,7 +189,7 @@ The backend integrates with OpenAI to provide:
 
 1. **Registration/Login**: User provides credentials
 2. **Token Generation**: Server generates access token (15min) and refresh token (7 days)
-3. **Token Storage**: 
+3. **Token Storage**:
    - Access token sent in response body
    - Refresh token stored in HTTP-only cookie
 4. **API Requests**: Client sends access token in Authorization header
