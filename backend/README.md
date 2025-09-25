@@ -49,15 +49,10 @@ cd backend
 
 2. Install dependencies:
 ```bash
-make deps
+go mod tidy
 ```
 
-3. Install development tools (optional):
-```bash
-make install-tools
-```
-
-4. Set up environment variables:
+3. Set up environment variables:
 ```bash
 cp .env.example .env
 # Edit .env with your configuration
@@ -85,25 +80,11 @@ The application uses Viper for configuration management. You can configure the a
 
 ### Development Mode (with hot reload)
 ```bash
-make dev
+go run delivery/main.go
 ```
 
-### Production Mode
-```bash
-make build
-make run
-```
-
-### Using Docker
-```bash
-make docker-build
-make docker-run
-```
 
 ## API Endpoints
-
-### Health Check
-- `GET /health` - Health check endpoint
 
 ### Authentication
 - `POST /api/v1/auth/register` - Register new user
@@ -126,35 +107,9 @@ make docker-run
 
 ## Database Setup
 
-### Local MongoDB
-```bash
-make db-up
-```
 
 ### MongoDB Atlas
 Set your MongoDB Atlas connection string in the `MONGODB_URI` environment variable.
-
-## Development
-
-### Code Formatting
-```bash
-make fmt
-```
-
-### Running Tests
-```bash
-make test
-```
-
-### Linting (requires golangci-lint)
-```bash
-make lint
-```
-
-### Generating Swagger Documentation (requires swag)
-```bash
-make swagger
-```
 
 ## Project Structure Details
 
