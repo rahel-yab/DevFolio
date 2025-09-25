@@ -77,12 +77,9 @@ The application uses Viper for configuration management. You can configure the a
 - `FRONTEND_URL`: Frontend URL for CORS (default: http://localhost:3000)
 
 ## Running the Application
-
-### Development Mode (with hot reload)
 ```bash
 go run delivery/main.go
 ```
-
 
 ## API Endpoints
 
