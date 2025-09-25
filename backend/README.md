@@ -6,9 +6,10 @@ This project follows Clean Architecture principles with the following structure:
 
 ```
 backend/
-├── controller/          # HTTP handlers and routing
-│   ├── delivery/       # HTTP request/response handlers
+├── controller/          # HTTP handlers and 
+routing
 │   ├── routes/         # Route definitions
+├── delivery/       # HTTP request/response handlers
 │   └── main.go         # Application entry point
 ├── usecase/            # Business logic layer
 ├── domain/             # Core business entities and interfaces
@@ -19,6 +20,7 @@ backend/
 │   ├── config/         # Configuration management
 │   ├── database/       # Database connections
 │   └── ai/            # AI service integrations
+│   └── middleware/    # auth_middleware service
 └── config/            # Configuration files
 ```
 
