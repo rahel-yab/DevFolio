@@ -3,7 +3,8 @@ package main
 import (
 	"log"
 
-	"devfolio-backend/controller/routes"
+	ctrl "devfolio-backend/delivery/controller"
+	"devfolio-backend/delivery/router"
 	"devfolio-backend/infrastructure/ai"
 	"devfolio-backend/infrastructure/auth"
 	"devfolio-backend/infrastructure/config"
@@ -49,15 +50,15 @@ func main() {
 	authUsecase := usecase.NewAuthUsecase(userRepo, jwtManager, passwordManager)
 
 	// Initialize handlers
-	portfolioHandler := delivery.NewPortfolioHandler(portfolioUsecase)
-	authHandler := delivery.NewAuthHandler(authUsecase, cfg)
+	portfolioHandler := ctrl.NewPortfolioHandler(portfolioUsecase)
+	authHandler := ctrl.NewAuthHandler(authUsecase, cfg)
 
 	// Setup routes
-	router := routes.SetupRoutes(portfolioHandler, authHandler, jwtManager, cfg)
+	ginRouter := router.SetupRoutes(portfolioHandler, authHandler, jwtManager, cfg)
 
 	// Start server
 	log.Printf("Starting server on port %s", cfg.Server.Port)
-	if err := router.Run(":" + cfg.Server.Port); err != nil {
+	if err := ginRouter.Run(":" + cfg.Server.Port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
