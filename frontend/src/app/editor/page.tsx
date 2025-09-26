@@ -1,11 +1,12 @@
 "use client";
+import { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "../../hooks/useAuth";
 import { apiService } from "../../services/api";
 
-export default function EditorPage() {
+function EditorPageInner() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -585,6 +586,14 @@ export default function EditorPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function EditorPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <EditorPageInner />
+    </Suspense>
   );
 }
 
