@@ -110,16 +110,6 @@ The application uses Viper for configuration management. You can configure the a
 go run delivery/main.go
 ```
 
-### Build and Run
-
-```bash
-# Build the application
-go build -o bin/devfolio delivery/main.go
-
-# Run the binary
-./bin/devfolio
-```
-
 ## API Endpoints
 
 ### Authentication
