@@ -5,10 +5,8 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  // REPLACE 'DevFolio' with your actual repository name
-  basePath: '/DevFolio', 
-  // This ensures assets like CSS/JS are loaded from the correct subpath
-  assetPrefix: '/DevFolio', 
+  // This is the critical fix for https://rahel-yab.github.io/DevFolio/
+  basePath: '/DevFolio',
 };
 
 export default nextConfig;
