@@ -21,23 +21,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # We are skipping the "guessing" and telling it exactly what to use
-      - name: Set Package Manager Info
-        id: detect-package-manager
-        run: |
-          echo "manager=npm" >> $GITHUB_OUTPUT
-          echo "command=ci" >> $GITHUB_OUTPUT
-          echo "runner=npx --no-install" >> $GITHUB_OUTPUT
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: 'npm'
-          # CHANGE THIS PATH if your file is just in /DevFolio/
-          cache-dependency-path: './DevFolio/DevFolio/package-lock.json'
+          # This must be the EXACT path from the root of your repo to the lockfile
+          cache-dependency-path: 'DevFolio/DevFolio/package-lock.json'
 
       - name: Install dependencies
+        # This tells the runner to 'cd' into your folder before running npm
         working-directory: ./DevFolio/DevFolio
         run: npm ci
 
@@ -48,6 +41,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
+          # Ensure this points to the 'out' folder created by 'next build'
           path: ./DevFolio/DevFolio/out
 
   deploy:
