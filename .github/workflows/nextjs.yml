@@ -26,22 +26,28 @@ jobs:
         with:
           node-version: "20"
           cache: 'npm'
-          # Try this first (Structure A)
-          cache-dependency-path: 'DevFolio/package-lock.json'
+          # This tells GitHub to find the lockfile no matter which folder it is in
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Install dependencies
-        working-directory: ./DevFolio
-        run: npm ci
+        # Using a wildcard search to find the right directory to run npm in
+        run: |
+          TARGET_DIR=$(find . -name "package-lock.json" -exec dirname {} \;)
+          echo "Running install in $TARGET_DIR"
+          cd $TARGET_DIR
+          npm ci
 
       - name: Build with Next.js
-        working-directory: ./DevFolio
-        run: npx next build
+        run: |
+          TARGET_DIR=$(find . -name "package-lock.json" -exec dirname {} \;)
+          cd $TARGET_DIR
+          npx next build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Point this to the 'out' folder inside your project folder
-          path: ./DevFolio/out
+          # This finds the 'out' folder wherever it was created
+          path: '**/out'
 
   deploy:
     environment:
