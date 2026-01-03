@@ -26,23 +26,22 @@ jobs:
         with:
           node-version: "20"
           cache: 'npm'
-          # This must be the EXACT path from the root of your repo to the lockfile
-          cache-dependency-path: 'DevFolio/DevFolio/package-lock.json'
+          # Try this first (Structure A)
+          cache-dependency-path: 'DevFolio/package-lock.json'
 
       - name: Install dependencies
-        # This tells the runner to 'cd' into your folder before running npm
-        working-directory: ./DevFolio/DevFolio
+        working-directory: ./DevFolio
         run: npm ci
 
       - name: Build with Next.js
-        working-directory: ./DevFolio/DevFolio
+        working-directory: ./DevFolio
         run: npx next build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Ensure this points to the 'out' folder created by 'next build'
-          path: ./DevFolio/DevFolio/out
+          # Point this to the 'out' folder inside your project folder
+          path: ./DevFolio/out
 
   deploy:
     environment:
