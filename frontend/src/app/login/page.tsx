@@ -120,7 +120,7 @@ export default function LoginPage() {
                     id="firstName"
                     type="text"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors placeholder-gray-600 text-gray-900"
-                    placeholder="John"
+                    placeholder="Enter your first name"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     required={isSignUp}
@@ -137,7 +137,7 @@ export default function LoginPage() {
                     id="lastName"
                     type="text"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors placeholder-gray-600 text-gray-900"
-                    placeholder="Doe"
+                    placeholder="Enter your last name"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     required={isSignUp}
@@ -157,7 +157,7 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors placeholder-gray-600 text-gray-900"
-                placeholder="john@example.com"
+                placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -175,7 +175,7 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors placeholder-gray-600 text-gray-900"
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
