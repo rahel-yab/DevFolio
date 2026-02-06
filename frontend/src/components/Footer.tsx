@@ -21,7 +21,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-gray-200 mb-6 max-w-md">
-              Create stunning developer portfolios and resumes in minutes with AI-powered content enhancement and professional templates.
+              Create developer portfolios and resumes in minutes with AI-powered content enhancement and professional templates.
             </p>
             <div className="flex space-x-4">
               <a
@@ -90,20 +90,16 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-200 hover:text-white transition-colors">
+                <Link href="/contact" className="text-gray-200 hover:text-white transition-colors">
                   Contact Us
-                </a>
+                </Link>
               </li>
               <li>
                 <a href="#" className="text-gray-200 hover:text-white transition-colors">
                   Privacy Policy
                 </a>
               </li>
-              <li>
-                <a href="#" className="text-gray-200 hover:text-white transition-colors">
-                  Terms of Service
-                </a>
-              </li>
+  
             </ul>
           </div>
         </div>
@@ -113,20 +109,9 @@ export default function Footer() {
           <div className="text-gray-300 text-sm mb-4 md:mb-0">
             © {new Date().getFullYear()} DevFolio. Built with ❤️ by Rahel Yabebal. All rights reserved.
           </div>
-          <div className="flex items-center space-x-6 text-sm text-gray-300">
-            <span>Made with Next.js & Tailwind CSS</span>
-            <span>•</span>
-            <a
-              href="https://github.com/rahel-yab/DevFolio"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-white transition-colors"
-            >
-              Open Source
-            </a>
+          
           </div>
         </div>
-      </div>
     </footer>
   );
 }
