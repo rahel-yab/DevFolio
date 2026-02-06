@@ -27,18 +27,7 @@ export default function ContactPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4 pb-20">
-      {/* Header */}
-      <div className="max-w-6xl mx-auto pt-8 mb-12">
-        <Link href="/" className="inline-flex items-center space-x-3">
-          <div className="relative">
-            <Image src="/logo.png" alt="Logo" width={40} height={40} className="rounded-xl" />
-            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl blur opacity-25"></div>
-          </div>
-          <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            DevFolio
-          </span>
-        </Link>
-      </div>
+      
 
       <div className="max-w-5xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
