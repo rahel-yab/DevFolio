@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+"use client";
+
+import { useCallback, useState } from 'react';
 import { apiService, Portfolio, CreatePortfolioRequest, UpdatePortfolioRequest } from '../services/api';
 
 export const usePortfolio = () => {
@@ -7,7 +9,7 @@ export const usePortfolio = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchUserPortfolios = async () => {
+  const fetchUserPortfolios = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -20,9 +22,9 @@ export const usePortfolio = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const fetchPortfolio = async (id: string) => {
+  const fetchPortfolio = useCallback(async (id: string) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -35,9 +37,9 @@ export const usePortfolio = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const createPortfolio = async (portfolioData: CreatePortfolioRequest) => {
+  const createPortfolio = useCallback(async (portfolioData: CreatePortfolioRequest) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -50,9 +52,9 @@ export const usePortfolio = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const updatePortfolio = async (id: string, updates: UpdatePortfolioRequest) => {
+  const updatePortfolio = useCallback(async (id: string, updates: UpdatePortfolioRequest) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -70,9 +72,9 @@ export const usePortfolio = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPortfolio]);
 
-  const deletePortfolio = async (id: string) => {
+  const deletePortfolio = useCallback(async (id: string) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -87,9 +89,9 @@ export const usePortfolio = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPortfolio]);
 
-  const enhanceWithAI = async (portfolioId: string, fields: string[], context?: any) => {
+  const enhanceWithAI = useCallback(async (portfolioId: string, fields: string[], context?: unknown) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -107,7 +109,7 @@ export const usePortfolio = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPortfolio]);
 
   return {
     portfolios,

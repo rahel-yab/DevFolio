@@ -2,9 +2,11 @@ package controller
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"devfolio-backend/domain/entities"
+	"devfolio-backend/infrastructure/auth"
 	"devfolio-backend/infrastructure/config"
 	"devfolio-backend/usecase"
 	
@@ -14,12 +16,14 @@ import (
 type AuthHandler struct {
 	authUsecase usecase.AuthUsecase
 	config      *config.Config
+	googleAuth  *auth.GoogleOAuthManager
 }
 
 func NewAuthHandler(authUsecase usecase.AuthUsecase, config *config.Config) *AuthHandler {
 	return &AuthHandler{
 		authUsecase: authUsecase,
 		config:      config,
+		googleAuth:  auth.NewGoogleOAuthManager(config),
 	}
 }
 
@@ -91,6 +95,66 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": response})
+}
+
+func (h *AuthHandler) GoogleLogin(c *gin.Context) {
+	if !h.googleAuth.IsConfigured() {
+		c.Redirect(http.StatusTemporaryRedirect, h.googleAuth.FrontendCallbackURL(false, "Google login is not configured yet."))
+		return
+	}
+
+	state, err := h.googleAuth.RandomState()
+	if err != nil {
+		c.Redirect(http.StatusTemporaryRedirect, h.googleAuth.FrontendCallbackURL(false, "Failed to initialize Google login."))
+		return
+	}
+
+	h.applySameSite(c)
+	c.SetCookie("google_oauth_state", state, 600, "/", h.config.Cookie.Domain, h.config.Cookie.Secure, true)
+	c.Redirect(http.StatusTemporaryRedirect, h.googleAuth.BuildAuthorizationURL(state))
+}
+
+func (h *AuthHandler) GoogleCallback(c *gin.Context) {
+	if !h.googleAuth.IsConfigured() {
+		c.Redirect(http.StatusTemporaryRedirect, h.googleAuth.FrontendCallbackURL(false, "Google login is not configured yet."))
+		return
+	}
+
+	if callbackError := c.Query("error"); callbackError != "" {
+		c.Redirect(http.StatusTemporaryRedirect, h.googleAuth.FrontendCallbackURL(false, "Google authentication was canceled."))
+		return
+	}
+
+	code := c.Query("code")
+	state := c.Query("state")
+	if code == "" || state == "" {
+		c.Redirect(http.StatusTemporaryRedirect, h.googleAuth.FrontendCallbackURL(false, "Missing Google callback parameters."))
+		return
+	}
+
+	cookieState, err := c.Cookie("google_oauth_state")
+	if err != nil || cookieState == "" || cookieState != state {
+		c.Redirect(http.StatusTemporaryRedirect, h.googleAuth.FrontendCallbackURL(false, "Google login state could not be verified."))
+		return
+	}
+
+	profile, err := h.googleAuth.ExchangeCode(c.Request.Context(), code)
+	if err != nil {
+		c.Redirect(http.StatusTemporaryRedirect, h.googleAuth.FrontendCallbackURL(false, "Failed to complete Google login."))
+		return
+	}
+
+	user, tokens, err := h.authUsecase.LoginWithGoogle(c.Request.Context(), profile)
+	if err != nil {
+		c.Redirect(http.StatusTemporaryRedirect, h.googleAuth.FrontendCallbackURL(false, "Failed to create or load your account."))
+		return
+	}
+
+	h.clearGoogleStateCookie(c)
+	h.setRefreshTokenCookie(c, tokens.RefreshToken)
+	_ = user
+
+	c.Redirect(http.StatusTemporaryRedirect, h.googleAuth.FrontendCallbackURL(true, ""))
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
@@ -173,6 +237,7 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 func (h *AuthHandler) setRefreshTokenCookie(c *gin.Context, refreshToken string) {
 	// Parse refresh token TTL
 	refreshTTL, _ := time.ParseDuration(h.config.JWT.RefreshExpiry)
+	h.applySameSite(c)
 
 	c.SetCookie(
 		"refresh_token",           // name
@@ -186,6 +251,7 @@ func (h *AuthHandler) setRefreshTokenCookie(c *gin.Context, refreshToken string)
 }
 
 func (h *AuthHandler) clearRefreshTokenCookie(c *gin.Context) {
+	h.applySameSite(c)
 	c.SetCookie(
 		"refresh_token",        // name
 		"",                     // value
@@ -195,4 +261,28 @@ func (h *AuthHandler) clearRefreshTokenCookie(c *gin.Context) {
 		h.config.Cookie.Secure, // secure
 		true,                   // httpOnly
 	)
+}
+
+func (h *AuthHandler) clearGoogleStateCookie(c *gin.Context) {
+	h.applySameSite(c)
+	c.SetCookie(
+		"google_oauth_state",
+		"",
+		-1,
+		"/",
+		h.config.Cookie.Domain,
+		h.config.Cookie.Secure,
+		true,
+	)
+}
+
+func (h *AuthHandler) applySameSite(c *gin.Context) {
+	switch strings.ToLower(h.config.Cookie.SameSite) {
+	case "strict":
+		c.SetSameSite(http.SameSiteStrictMode)
+	case "none":
+		c.SetSameSite(http.SameSiteNoneMode)
+	default:
+		c.SetSameSite(http.SameSiteLaxMode)
+	}
 }

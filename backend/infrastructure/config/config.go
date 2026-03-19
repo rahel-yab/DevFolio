@@ -15,6 +15,7 @@ type Config struct {
 	CORS     CORSConfig     `mapstructure:"cors"`
 	JWT      JWTConfig      `mapstructure:"jwt"`
 	Cookie   CookieConfig   `mapstructure:"cookie"`
+	Google   GoogleConfig   `mapstructure:"google"`
 }
 
 type DatabaseConfig struct {
@@ -46,6 +47,12 @@ type CookieConfig struct {
 	Domain   string `mapstructure:"domain"`
 	Secure   bool   `mapstructure:"secure"`
 	SameSite string `mapstructure:"same_site"`
+}
+
+type GoogleConfig struct {
+	ClientID     string `mapstructure:"client_id"`
+	ClientSecret string `mapstructure:"client_secret"`
+	RedirectURL  string `mapstructure:"redirect_url"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -88,14 +95,17 @@ func setDefaults() {
 	viper.SetDefault("database.name", "devfolio")
 	viper.SetDefault("server.port", "8080")
 	viper.SetDefault("server.gin_mode", "release")
-	viper.SetDefault("ai.openai_model", "gpt-3.5-turbo")
+	viper.SetDefault("ai.openai_model", "gpt-4o-mini")
 	viper.SetDefault("cors.frontend_url", "http://localhost:3000")
 	viper.SetDefault("jwt.secret", "devfolio-default-secret-key-change-in-production")
 	viper.SetDefault("jwt.access_expiry", "15m")
 	viper.SetDefault("jwt.refresh_expiry", "168h")
-	viper.SetDefault("cookie.domain", "localhost")
+	viper.SetDefault("cookie.domain", "")
 	viper.SetDefault("cookie.secure", false)
 	viper.SetDefault("cookie.same_site", "lax")
+	viper.SetDefault("google.client_id", "")
+	viper.SetDefault("google.client_secret", "")
+	viper.SetDefault("google.redirect_url", "http://localhost:8080/api/v1/auth/google/callback")
 }
 
 func overrideWithEnvVars() {
@@ -137,5 +147,14 @@ func overrideWithEnvVars() {
 	}
 	if sameSite := os.Getenv("COOKIE_SAME_SITE"); sameSite != "" {
 		viper.Set("cookie.same_site", sameSite)
+	}
+	if clientID := os.Getenv("GOOGLE_CLIENT_ID"); clientID != "" {
+		viper.Set("google.client_id", clientID)
+	}
+	if clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET"); clientSecret != "" {
+		viper.Set("google.client_secret", clientSecret)
+	}
+	if redirectURL := os.Getenv("GOOGLE_REDIRECT_URL"); redirectURL != "" {
+		viper.Set("google.redirect_url", redirectURL)
 	}
 }

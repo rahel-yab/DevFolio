@@ -15,6 +15,7 @@ import (
 type AuthUsecase interface {
 	Register(ctx context.Context, req *entities.RegisterRequest) (*entities.User, *auth.TokenPair, error)
 	Login(ctx context.Context, req *entities.LoginRequest) (*entities.User, *auth.TokenPair, error)
+	LoginWithGoogle(ctx context.Context, profile *entities.GoogleProfile) (*entities.User, *auth.TokenPair, error)
 	RefreshToken(ctx context.Context, refreshToken string) (string, error)
 	GetProfile(ctx context.Context, userID string) (*entities.User, error)
 	UpdateProfile(ctx context.Context, userID string, req *entities.UpdateProfileRequest) (*entities.User, error)
@@ -63,10 +64,11 @@ func (u *authUsecase) Register(ctx context.Context, req *entities.RegisterReques
 
 	// Create user
 	user := &entities.User{
-		Email:     strings.ToLower(req.Email),
-		Password:  hashedPassword,
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
+		Email:        strings.ToLower(req.Email),
+		Password:     hashedPassword,
+		AuthProvider: "local",
+		FirstName:    req.FirstName,
+		LastName:     req.LastName,
 	}
 
 	if err := u.userRepo.Create(ctx, user); err != nil {
@@ -101,6 +103,53 @@ func (u *authUsecase) Login(ctx context.Context, req *entities.LoginRequest) (*e
 	}
 
 	// Generate tokens
+	tokens, err := u.jwtManager.GenerateTokenPair(user.ID.Hex(), user.Email)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate tokens: %w", err)
+	}
+
+	return user, tokens, nil
+}
+
+func (u *authUsecase) LoginWithGoogle(ctx context.Context, profile *entities.GoogleProfile) (*entities.User, *auth.TokenPair, error) {
+	user, err := u.userRepo.GetByEmail(ctx, strings.ToLower(profile.Email))
+	if err != nil {
+		user = &entities.User{
+			Email:        strings.ToLower(profile.Email),
+			AuthProvider: "google",
+			GoogleID:     profile.GoogleID,
+			FirstName:    profile.FirstName,
+			LastName:     profile.LastName,
+			Avatar:       profile.Avatar,
+			IsVerified:   true,
+		}
+
+		if err := u.userRepo.Create(ctx, user); err != nil {
+			return nil, nil, fmt.Errorf("failed to create google user: %w", err)
+		}
+	} else {
+		user.AuthProvider = "google"
+		user.GoogleID = profile.GoogleID
+		if profile.FirstName != "" {
+			user.FirstName = profile.FirstName
+		}
+		if profile.LastName != "" {
+			user.LastName = profile.LastName
+		}
+		if profile.Avatar != "" {
+			user.Avatar = profile.Avatar
+		}
+		user.IsVerified = true
+
+		if err := u.userRepo.Update(ctx, user.ID, user); err != nil {
+			return nil, nil, fmt.Errorf("failed to update google user: %w", err)
+		}
+	}
+
+	if err := u.userRepo.UpdateLastLogin(ctx, user.ID); err != nil {
+		fmt.Printf("Failed to update last login for user %s: %v\n", user.ID.Hex(), err)
+	}
+
 	tokens, err := u.jwtManager.GenerateTokenPair(user.ID.Hex(), user.Email)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate tokens: %w", err)

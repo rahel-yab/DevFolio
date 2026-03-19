@@ -1,8 +1,7 @@
-
 "use client";
+
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -14,149 +13,154 @@ export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1200));
     setIsSubmitting(false);
     setSubmitted(true);
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4 pb-20">
-      
+    <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+        <section className="shell-card rounded-[2.25rem] p-8 sm:p-10">
+          <span className="eyebrow">Contact DevFolio</span>
+          <h1 className="mt-5 text-4xl font-semibold tracking-tight text-slate-950">
+            Questions, feedback, or a rough edge you want fixed?
+          </h1>
+          <p className="mt-3 max-w-2xl text-base leading-7 text-slate-700">
+            Send a note and we’ll respond as quickly as we can. This page is still a lightweight demo form, but the flow is now aligned with the rest of the app.
+          </p>
 
-      <div className="max-w-5xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left Column: Contact Form */}
-          <div className="lg:col-span-2 bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
-            {submitted ? (
-              <div className="text-center py-12 animate-in fade-in zoom-in duration-300">
-                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
-                  ✓
-                </div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Message Sent!</h2>
-                <p className="text-gray-600 mb-8">We'll get back to you within 24 hours.</p>
-                <button 
-                  onClick={() => setSubmitted(false)}
-                  className="text-indigo-600 font-semibold hover:underline"
-                >
-                  Send another message
-                </button>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <InfoCard title="Email" copy="support@devfolio.io" />
+            <InfoCard title="Location" copy="Addis Ababa, Ethiopia" />
+            <InfoCard title="Support hours" copy="Monday to Friday, 9:00 AM to 6:00 PM EAT" />
+            <InfoCard title="Best for" copy="Bug reports, product feedback, and account help" />
+          </div>
+        </section>
+
+        <section className="shell-card rounded-[2.25rem] p-8 sm:p-10">
+          {submitted ? (
+            <div className="flex min-h-[420px] flex-col items-center justify-center text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                <svg className="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m5 13 4 4L19 7" />
+                </svg>
               </div>
-            ) : (
-              <>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Get in touch</h1>
-                <p className="text-gray-600 mb-8">Have a question or feedback? We'd love to hear from you.</p>
+              <h2 className="mt-6 text-3xl font-semibold text-slate-950">Message sent</h2>
+              <p className="mt-3 max-w-md text-sm leading-7 text-slate-700">
+                Thanks for reaching out. We’ll get back to you soon.
+              </p>
+              <button
+                type="button"
+                onClick={() => setSubmitted(false)}
+                className="mt-6 rounded-full border border-[color:var(--line)] bg-white px-5 py-3 text-sm font-semibold text-slate-800"
+              >
+                Send another message
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[color:var(--accent-strong)]">
+                    Contact form
+                  </p>
+                  <h2 className="mt-2 text-3xl font-semibold text-slate-950">Tell us what’s on your mind</h2>
+                </div>
+                <Link href="/help_center" className="text-sm font-semibold text-[color:var(--accent-strong)]">
+                  Help center
+                </Link>
+              </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Name</label>
-                      <input
-                        required
-                        type="text"
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                        placeholder="Your name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-                      <input
-                        required
-                        type="email"
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                        placeholder="email@example.com"
-                        value={formData.email}
-                        onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      />
-                    </div>
-                  </div>
+              <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field
+                    label="Name"
+                    value={formData.name}
+                    onChange={(value) => setFormData({ ...formData, name: value })}
+                  />
+                  <Field
+                    label="Email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(value) => setFormData({ ...formData, email: value })}
+                  />
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
-                    <select 
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                      value={formData.subject}
-                      onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                    >
-                      <option>Support</option>
-                      <option>Billing</option>
-                      <option>Feature Request</option>
-                      <option>Other</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Message</label>
-                    <textarea
-                      required
-                      rows={5}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                      placeholder="How can we help?"
-                      value={formData.message}
-                      onChange={(e) => setFormData({...formData, message: e.target.value})}
-                    ></textarea>
-                  </div>
-
-                  <button
-                    disabled={isSubmitting}
-                    className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all disabled:opacity-50"
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-slate-800">Subject</span>
+                  <select
+                    value={formData.subject}
+                    onChange={(event) => setFormData({ ...formData, subject: event.target.value })}
+                    className="w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-[color:var(--accent)]"
                   >
-                    {isSubmitting ? "Sending..." : "Send Message"}
-                  </button>
-                </form>
-              </>
-            )}
-          </div>
+                    <option>Support</option>
+                    <option>Billing</option>
+                    <option>Feature Request</option>
+                    <option>Other</option>
+                  </select>
+                </label>
 
-          {/* Right Column: Contact Info */}
-          <div className="space-y-6">
-            <div className="bg-indigo-900 rounded-3xl p-8 text-white shadow-xl">
-              <h3 className="text-xl font-bold mb-6">Contact Information</h3>
-              <div className="space-y-6">
-                <div className="flex items-start space-x-4">
-                  <span className="text-2xl">📧</span>
-                  <div>
-                    <p className="font-semibold">Email us</p>
-                    <p className="text-indigo-200 text-sm">support@devfolio.io</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-4">
-                  <span className="text-2xl">📍</span>
-                  <div>
-                    <p className="font-semibold">Location</p>
-                    <p className="text-indigo-200 text-sm">Addis Ababa, Ethiopia</p>
-                  </div>
-                </div>
-              </div>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-slate-800">Message</span>
+                  <textarea
+                    rows={6}
+                    value={formData.message}
+                    onChange={(event) => setFormData({ ...formData, message: event.target.value })}
+                    className="w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-[color:var(--accent)]"
+                    required
+                  />
+                </label>
 
-              <div className="mt-12 pt-8 border-t border-indigo-800">
-                <p className="text-sm text-indigo-300 mb-4">Follow our updates</p>
-                <div className="flex space-x-4">
-                  {/* Social icons would go here, same as footer */}
-                  <div className="w-10 h-10 bg-white/10 rounded-lg hover:bg-white/20 transition-colors cursor-pointer"></div>
-                  <div className="w-10 h-10 bg-white/10 rounded-lg hover:bg-white/20 transition-colors cursor-pointer"></div>
-                </div>
-              </div>
-            </div>
-
-            {/* Support Hours Card */}
-            <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
-              <h4 className="font-bold text-gray-900 mb-2">Support Hours</h4>
-              <p className="text-gray-600 text-sm">Monday — Friday</p>
-              <p className="text-gray-900 font-medium">9:00 AM - 6:00 PM EAT</p>
-            </div>
-          </div>
-
-        </div>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full rounded-full bg-[color:var(--accent)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[color:var(--accent-strong)] disabled:opacity-60"
+                >
+                  {isSubmitting ? "Sending..." : "Send message"}
+                </button>
+              </form>
+            </>
+          )}
+        </section>
       </div>
     </main>
+  );
+}
+
+function InfoCard({ title, copy }: { title: string; copy: string }) {
+  return (
+    <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 p-5">
+      <p className="text-sm font-semibold text-slate-900">{title}</p>
+      <p className="mt-2 text-sm leading-7 text-slate-700">{copy}</p>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-semibold text-slate-800">{label}</span>
+      <input
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-[color:var(--accent)]"
+        required
+      />
+    </label>
   );
 }

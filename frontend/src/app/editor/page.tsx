@@ -1,825 +1,807 @@
 "use client";
-import { Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useAuth } from "../../hooks/useAuth";
-import { apiService } from "../../services/api";
 
-function EditorPageInner() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+import { Suspense, useEffect, useState, type ReactNode } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "../../hooks/useAuth";
+import { apiService, Portfolio } from "../../services/api";
+
+type ExperienceItem = {
+  company: string;
+  role: string;
+  description: string;
+  location: string;
+  start_date: string;
+  end_date?: string;
+  is_current: boolean;
+};
+
+type EducationItem = {
+  school: string;
+  degree: string;
+  field: string;
+  description: string;
+  gpa?: string;
+  start_date: string;
+  end_date?: string;
+};
+
+type ProjectItem = {
+  name: string;
+  description: string;
+  technologies: string;
+  link: string;
+  github_link: string;
+  image_url: string;
+  start_date: string;
+  end_date?: string;
+  featured: boolean;
+};
+
+const blankExperience = (): ExperienceItem => ({
+  company: "",
+  role: "",
+  description: "",
+  location: "",
+  start_date: new Date().toISOString(),
+  end_date: "",
+  is_current: false,
+});
+
+const blankEducation = (): EducationItem => ({
+  school: "",
+  degree: "",
+  field: "",
+  description: "",
+  gpa: "",
+  start_date: new Date().toISOString(),
+  end_date: "",
+});
+
+const blankProject = (): ProjectItem => ({
+  name: "",
+  description: "",
+  technologies: "",
+  link: "",
+  github_link: "",
+  image_url: "",
+  start_date: new Date().toISOString(),
+  end_date: "",
+  featured: false,
+});
+
+function EditorContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const template = searchParams.get("template");
+  const template = searchParams.get("template") || "modern-minimal";
+  const portfolioId = searchParams.get("portfolio");
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 
-  // State for the form fields
   const [name, setName] = useState("");
   const [title, setTitle] = useState("");
+  const [bio, setBio] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
   const [website, setWebsite] = useState("");
-  const [bio, setBio] = useState("");
-  const [skills, setSkills] = useState([""]);
-  const [experience, setExperience] = useState([
-    { company: "", role: "", years: "", description: "" },
-  ]);
-  const [education, setEducation] = useState([
-    { school: "", degree: "", years: "", gpa: "" },
-  ]);
-  const [projects, setProjects] = useState([
-    { name: "", description: "", technologies: "", link: "", github: "" },
-  ]);
+  const [linkedin, setLinkedin] = useState("");
+  const [github, setGithub] = useState("");
+  const [skillsInput, setSkillsInput] = useState("");
+  const [isPublic, setIsPublic] = useState(false);
+  const [experience, setExperience] = useState<ExperienceItem[]>([blankExperience()]);
+  const [education, setEducation] = useState<EducationItem[]>([blankEducation()]);
+  const [projects, setProjects] = useState<ProjectItem[]>([blankProject()]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [enhancing, setEnhancing] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Loading and saving states
-  const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState("");
-
-  // Redirect if not authenticated
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       router.push("/login");
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [authLoading, isAuthenticated, router]);
 
-  // Populate form with user data
   useEffect(() => {
-    if (user) {
-      setName(`${user.first_name} ${user.last_name}`);
-      setEmail(user.email);
-      setBio(user.bio || "");
-      setPhone(user.phone || "");
-      setLocation(user.location || "");
-      setWebsite(user.website || "");
+    if (!user || portfolioId) {
+      return;
     }
-  }, [user]);
 
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isAuthenticated) return;
+    setName(`${user.first_name} ${user.last_name}`.trim());
+    setEmail(user.email || "");
+    setBio(user.bio || "");
+    setPhone(user.phone || "");
+    setLocation(user.location || "");
+    setWebsite(user.website || "");
+    setLinkedin(user.linkedin || "");
+    setGithub(user.github || "");
+  }, [portfolioId, user]);
 
-    setIsSaving(true);
-    setMessage("");
+  useEffect(() => {
+    if (!portfolioId) {
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+    setError(null);
+
+    apiService
+      .getPortfolio(portfolioId)
+      .then((portfolio) => {
+        if (!active) {
+          return;
+        }
+
+        hydrateFromPortfolio(portfolio);
+      })
+      .catch((loadError) => {
+        if (active) {
+          setError(loadError instanceof Error ? loadError.message : "Unable to load portfolio.");
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [portfolioId]);
+
+  const hydrateFromPortfolio = (portfolio: Portfolio) => {
+    setName(portfolio.name);
+    setTitle(portfolio.title);
+    setBio(portfolio.bio);
+    setEmail(portfolio.email);
+    setPhone(portfolio.phone);
+    setLocation(portfolio.location);
+    setWebsite(portfolio.website);
+    setLinkedin(portfolio.linkedin);
+    setGithub(portfolio.github);
+    setSkillsInput(portfolio.skills.join(", "));
+    setIsPublic(portfolio.is_public);
+    setExperience(
+      portfolio.experience.length > 0
+        ? portfolio.experience.map((item) => ({
+            company: item.company,
+            role: item.role,
+            description: item.description,
+            location: item.location,
+            start_date: item.start_date,
+            end_date: item.end_date || "",
+            is_current: item.is_current,
+          }))
+        : [blankExperience()]
+    );
+    setEducation(
+      portfolio.education.length > 0
+        ? portfolio.education.map((item) => ({
+            school: item.school,
+            degree: item.degree,
+            field: item.field,
+            description: item.description,
+            gpa: item.gpa || "",
+            start_date: item.start_date,
+            end_date: item.end_date || "",
+          }))
+        : [blankEducation()]
+    );
+    setProjects(
+      portfolio.projects.length > 0
+        ? portfolio.projects.map((item) => ({
+            name: item.name,
+            description: item.description,
+            technologies: item.tech_stack.join(", "),
+            link: item.link,
+            github_link: item.github_link,
+            image_url: item.image_url,
+            start_date: item.start_date,
+            end_date: item.end_date || "",
+            featured: item.featured,
+          }))
+        : [blankProject()]
+    );
+  };
+
+  const normalizedSkills = skillsInput
+    .split(",")
+    .map((skill) => skill.trim())
+    .filter(Boolean);
+
+  const payload = {
+    name,
+    title,
+    bio,
+    email,
+    phone,
+    location,
+    website,
+    linkedin,
+    github,
+    skills: normalizedSkills,
+    template,
+    is_public: isPublic,
+    experience: experience
+      .filter((item) => item.company || item.role || item.description)
+      .map((item) => ({
+        company: item.company,
+        role: item.role,
+        description: item.description,
+        location: item.location,
+        start_date: item.start_date || new Date().toISOString(),
+        end_date: item.end_date || undefined,
+        is_current: item.is_current,
+      })),
+    education: education
+      .filter((item) => item.school || item.degree || item.description)
+      .map((item) => ({
+        school: item.school,
+        degree: item.degree,
+        field: item.field,
+        description: item.description,
+        gpa: item.gpa || undefined,
+        start_date: item.start_date || new Date().toISOString(),
+        end_date: item.end_date || undefined,
+      })),
+    projects: projects
+      .filter((item) => item.name || item.description)
+      .map((item) => ({
+        name: item.name,
+        description: item.description,
+        tech_stack: item.technologies
+          .split(",")
+          .map((tech) => tech.trim())
+          .filter(Boolean),
+        link: item.link,
+        github_link: item.github_link,
+        image_url: item.image_url,
+        start_date: item.start_date || new Date().toISOString(),
+        end_date: item.end_date || undefined,
+        featured: item.featured,
+      })),
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    setMessage(null);
 
     try {
-      // Transform the form data to match backend structure
-      const portfolioData = {
-        name: name,
-        title: title,
-        bio: bio,
-        email: email,
-        phone: phone,
-        location: location,
-        website: website,
-        linkedin: user?.linkedin || "",
-        github: user?.github || "",
-        skills: skills.filter(skill => skill.trim() !== ""),
-        experience: experience.map(exp => ({
-          company: exp.company,
-          role: exp.role,
-          start_date: new Date().toISOString(),
-          end_date: undefined,
-          description: exp.description,
-          location: "",
-          is_current: false
-        })),
-        education: education.map(edu => ({
-          school: edu.school,
-          degree: edu.degree,
-          field: "",
-          start_date: new Date().toISOString(),
-          end_date: undefined,
-          gpa: edu.gpa,
-          description: ""
-        })),
-        projects: projects.map(proj => ({
-          name: proj.name,
-          description: proj.description,
-          tech_stack: proj.technologies.split(",").map(t => t.trim()).filter(t => t),
-          link: proj.link,
-          github_link: proj.github,
-          image_url: "",
-          start_date: new Date().toISOString(),
-          end_date: undefined,
-          featured: false
-        })),
-        template: template || "modern"
-      };
+      const savedPortfolio = portfolioId
+        ? await apiService.updatePortfolio(portfolioId, payload)
+        : await apiService.createPortfolio(payload);
 
-      const portfolio = await apiService.createPortfolio(portfolioData);
-      setMessage("Portfolio saved successfully!");
-      
-      // Redirect to dashboard after successful save
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 2000);
-      
-    } catch (error) {
-      setMessage("Failed to save portfolio. Please try again.");
+      setIsPublic(savedPortfolio.is_public);
+      setMessage(portfolioId ? "Portfolio updated." : "Portfolio created.");
+
+      if (!portfolioId) {
+        router.replace(`/editor?portfolio=${savedPortfolio.id}`);
+      }
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Unable to save portfolio.");
     } finally {
-      setIsSaving(false);
-      setTimeout(() => setMessage(""), 5000);
+      setSaving(false);
     }
   };
 
-  // Handlers for skills
-  const handleSkillChange = (idx: number, value: string) => {
-    setSkills((skills) =>
-      skills.map((skill, i) => (i === idx ? value : skill))
-    );
-  };
-  const addSkill = () => setSkills((skills) => [...skills, ""]);
-  const removeSkill = (idx: number) => {
-    if (skills.length > 1) {
-      setSkills((skills) => skills.filter((_, i) => i !== idx));
+  const handleEnhanceBio = async () => {
+    setEnhancing(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      let workingPortfolioId = portfolioId;
+
+      if (!workingPortfolioId) {
+        const savedPortfolio = await apiService.createPortfolio(payload);
+        workingPortfolioId = savedPortfolio.id;
+        router.replace(`/editor?portfolio=${savedPortfolio.id}`);
+      } else {
+        await apiService.updatePortfolio(workingPortfolioId, payload);
+      }
+
+      const enhanced = await apiService.enhanceWithAI(workingPortfolioId, ["bio"], {
+        title,
+        skills: normalizedSkills,
+      });
+      hydrateFromPortfolio(enhanced);
+      setMessage("Bio enhanced with AI.");
+    } catch (enhanceError) {
+      setError(enhanceError instanceof Error ? enhanceError.message : "Unable to enhance the bio.");
+    } finally {
+      setEnhancing(false);
     }
   };
 
-  // Handlers for dynamic fields (experience, education, projects)
-  const handleExpChange = (idx: number, field: string, value: string) => {
-    setExperience((exp) =>
-      exp.map((e, i) => (i === idx ? { ...e, [field]: value } : e))
-    );
-  };
-  const addExp = () =>
-    setExperience((exp) => [...exp, { company: "", role: "", years: "", description: "" }]);
-  const removeExp = (idx: number) => {
-    if (experience.length > 1) {
-      setExperience((exp) => exp.filter((_, i) => i !== idx));
-    }
-  };
-
-  const handleEduChange = (idx: number, field: string, value: string) => {
-    setEducation((edu) =>
-      edu.map((e, i) => (i === idx ? { ...e, [field]: value } : e))
-    );
-  };
-  const addEdu = () =>
-    setEducation((edu) => [...edu, { school: "", degree: "", years: "", gpa: "" }]);
-  const removeEdu = (idx: number) => {
-    if (education.length > 1) {
-      setEducation((edu) => edu.filter((_, i) => i !== idx));
-    }
-  };
-
-  const handleProjChange = (idx: number, field: string, value: string) => {
-    setProjects((proj) =>
-      proj.map((p, i) => (i === idx ? { ...p, [field]: value } : p))
-    );
-  };
-  const addProj = () =>
-    setProjects((proj) => [...proj, { name: "", description: "", technologies: "", link: "", github: "" }]);
-  const removeProj = (idx: number) => {
-    if (projects.length > 1) {
-      setProjects((proj) => proj.filter((_, i) => i !== idx));
-    }
-  };
-
-  if (isLoading || !isAuthenticated) {
+  if (authLoading || loading || !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
+      <main className="flex min-h-[70vh] items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-2 border-[color:var(--accent)] border-t-transparent" />
+      </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">Resume Builder</h1>
-              {template && (
-                <p className="text-lg text-indigo-600">
-                  <span className="font-semibold">Template:</span> {template}
-                </p>
-              )}
-            </div>
-            <Link href="/templates">
-              <button className="px-4 py-2 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-colors">
-                Change Template
-              </button>
+    <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <span className="eyebrow">{portfolioId ? "Continue editing" : "New portfolio draft"}</span>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950">
+            {portfolioId ? "Refine your portfolio" : "Build your portfolio"}
+          </h1>
+          <p className="mt-2 text-sm leading-7 text-slate-700">
+            Template: <span className="font-semibold text-slate-900">{template}</span>
+          </p>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Link
+            href="/templates"
+            className="rounded-full border border-[color:var(--line)] bg-white px-5 py-3 text-center text-sm font-semibold text-slate-800"
+          >
+            Change template
+          </Link>
+          {portfolioId && isPublic && (
+            <Link
+              href={`/portfolio/${portfolioId}`}
+              className="rounded-full border border-[color:var(--line)] bg-white px-5 py-3 text-center text-sm font-semibold text-slate-800"
+            >
+              Open public page
             </Link>
-          </div>
+          )}
         </div>
+      </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Form Section */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <form className="space-y-8" onSubmit={handleSubmit}>
-              {/* Personal Information */}
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-900 border-b border-gray-200 pb-2">
-                  Personal Information
-                </h2>
-                
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
-                    <input
-                      type="text"
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                      placeholder="John Doe"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Professional Title *</label>
-                    <input
-                      type="text"
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                      placeholder="Software Engineer"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
+      <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+        <section className="shell-card rounded-[2rem] p-6 sm:p-8">
+          <div className="space-y-8">
+            <Section title="Identity">
+              <TwoColumn>
+                <Field label="Full name" value={name} onChange={setName} />
+                <Field label="Professional title" value={title} onChange={setTitle} />
+              </TwoColumn>
+              <TwoColumn>
+                <Field label="Email" value={email} onChange={setEmail} type="email" />
+                <Field label="Phone" value={phone} onChange={setPhone} />
+              </TwoColumn>
+              <TwoColumn>
+                <Field label="Location" value={location} onChange={setLocation} />
+                <Field label="Website" value={website} onChange={setWebsite} type="url" />
+              </TwoColumn>
+              <TwoColumn>
+                <Field label="LinkedIn" value={linkedin} onChange={setLinkedin} type="url" />
+                <Field label="GitHub" value={github} onChange={setGithub} type="url" />
+              </TwoColumn>
+            </Section>
 
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-                    <input
-                      type="email"
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                      placeholder="john@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
-                    <input
-                      type="tel"
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                      placeholder="+1 (555) 123-4567"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                    />
-                  </div>
-                </div>
+            <Section title="Summary">
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-slate-800">Professional summary</span>
+                <textarea
+                  value={bio}
+                  onChange={(event) => setBio(event.target.value)}
+                  rows={6}
+                  className="w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-[color:var(--accent)]"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={handleEnhanceBio}
+                disabled={enhancing}
+                className="rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm font-semibold text-slate-800"
+              >
+                {enhancing ? "Enhancing..." : "Enhance summary with AI"}
+              </button>
+            </Section>
 
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
-                    <input
-                      type="text"
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                      placeholder="San Francisco, CA"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Website/Portfolio</label>
-                    <input
-                      type="url"
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                      placeholder="https://johndoe.dev"
-                      value={website}
-                      onChange={(e) => setWebsite(e.target.value)}
-                    />
-                  </div>
-                </div>
+            <Section title="Skills">
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-slate-800">Comma-separated skills</span>
+                <input
+                  value={skillsInput}
+                  onChange={(event) => setSkillsInput(event.target.value)}
+                  className="w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-[color:var(--accent)]"
+                  placeholder="TypeScript, Go, Next.js, MongoDB"
+                />
+              </label>
+            </Section>
 
+            <Section title="Experience">
+              <Collection
+                items={experience}
+                addLabel="Add experience"
+                onAdd={() => setExperience((items) => [...items, blankExperience()])}
+                onRemove={(index) => setExperience((items) => items.filter((_, itemIndex) => itemIndex !== index))}
+                renderItem={(item, index) => (
+                  <>
+                    <TwoColumn>
+                      <Field
+                        label="Company"
+                        value={item.company}
+                        onChange={(value) =>
+                          setExperience((items) => items.map((entry, itemIndex) => (itemIndex === index ? { ...entry, company: value } : entry)))
+                        }
+                      />
+                      <Field
+                        label="Role"
+                        value={item.role}
+                        onChange={(value) =>
+                          setExperience((items) => items.map((entry, itemIndex) => (itemIndex === index ? { ...entry, role: value } : entry)))
+                        }
+                      />
+                    </TwoColumn>
+                    <Field
+                      label="Location"
+                      value={item.location}
+                      onChange={(value) =>
+                        setExperience((items) => items.map((entry, itemIndex) => (itemIndex === index ? { ...entry, location: value } : entry)))
+                      }
+                    />
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-semibold text-slate-800">What did you work on?</span>
+                      <textarea
+                        value={item.description}
+                        onChange={(event) =>
+                          setExperience((items) =>
+                            items.map((entry, itemIndex) =>
+                              itemIndex === index ? { ...entry, description: event.target.value } : entry
+                            )
+                          )
+                        }
+                        rows={4}
+                        className="w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-[color:var(--accent)]"
+                      />
+                    </label>
+                  </>
+                )}
+              />
+            </Section>
+
+            <Section title="Projects">
+              <Collection
+                items={projects}
+                addLabel="Add project"
+                onAdd={() => setProjects((items) => [...items, blankProject()])}
+                onRemove={(index) => setProjects((items) => items.filter((_, itemIndex) => itemIndex !== index))}
+                renderItem={(item, index) => (
+                  <>
+                    <TwoColumn>
+                      <Field
+                        label="Project name"
+                        value={item.name}
+                        onChange={(value) =>
+                          setProjects((items) => items.map((entry, itemIndex) => (itemIndex === index ? { ...entry, name: value } : entry)))
+                        }
+                      />
+                      <Field
+                        label="Tech stack"
+                        value={item.technologies}
+                        onChange={(value) =>
+                          setProjects((items) =>
+                            items.map((entry, itemIndex) => (itemIndex === index ? { ...entry, technologies: value } : entry))
+                          )
+                        }
+                      />
+                    </TwoColumn>
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-semibold text-slate-800">Description</span>
+                      <textarea
+                        value={item.description}
+                        onChange={(event) =>
+                          setProjects((items) =>
+                            items.map((entry, itemIndex) =>
+                              itemIndex === index ? { ...entry, description: event.target.value } : entry
+                            )
+                          )
+                        }
+                        rows={4}
+                        className="w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-[color:var(--accent)]"
+                      />
+                    </label>
+                    <TwoColumn>
+                      <Field
+                        label="Live link"
+                        value={item.link}
+                        onChange={(value) =>
+                          setProjects((items) => items.map((entry, itemIndex) => (itemIndex === index ? { ...entry, link: value } : entry)))
+                        }
+                        type="url"
+                      />
+                      <Field
+                        label="GitHub link"
+                        value={item.github_link}
+                        onChange={(value) =>
+                          setProjects((items) =>
+                            items.map((entry, itemIndex) => (itemIndex === index ? { ...entry, github_link: value } : entry))
+                          )
+                        }
+                        type="url"
+                      />
+                    </TwoColumn>
+                  </>
+                )}
+              />
+            </Section>
+
+            <Section title="Education">
+              <Collection
+                items={education}
+                addLabel="Add education"
+                onAdd={() => setEducation((items) => [...items, blankEducation()])}
+                onRemove={(index) => setEducation((items) => items.filter((_, itemIndex) => itemIndex !== index))}
+                renderItem={(item, index) => (
+                  <>
+                    <TwoColumn>
+                      <Field
+                        label="School"
+                        value={item.school}
+                        onChange={(value) =>
+                          setEducation((items) => items.map((entry, itemIndex) => (itemIndex === index ? { ...entry, school: value } : entry)))
+                        }
+                      />
+                      <Field
+                        label="Degree"
+                        value={item.degree}
+                        onChange={(value) =>
+                          setEducation((items) => items.map((entry, itemIndex) => (itemIndex === index ? { ...entry, degree: value } : entry)))
+                        }
+                      />
+                    </TwoColumn>
+                    <TwoColumn>
+                      <Field
+                        label="Field"
+                        value={item.field}
+                        onChange={(value) =>
+                          setEducation((items) => items.map((entry, itemIndex) => (itemIndex === index ? { ...entry, field: value } : entry)))
+                        }
+                      />
+                      <Field
+                        label="GPA"
+                        value={item.gpa || ""}
+                        onChange={(value) =>
+                          setEducation((items) => items.map((entry, itemIndex) => (itemIndex === index ? { ...entry, gpa: value } : entry)))
+                        }
+                      />
+                    </TwoColumn>
+                  </>
+                )}
+              />
+            </Section>
+
+            <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white/70 p-5">
+              <label className="flex items-center justify-between gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Professional Summary</label>
-                  <textarea
-                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                    placeholder="Brief description of your professional background and key achievements..."
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    rows={4}
-                  />
-                  <button
-                    type="button"
-                    className="mt-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
-                  >
-                    ✨ Enhance with AI
-                  </button>
+                  <p className="text-sm font-semibold text-slate-900">Public portfolio</p>
+                  <p className="text-sm text-slate-600">Turn this on when the draft is ready to share.</p>
                 </div>
-              </div>
+                <input
+                  type="checkbox"
+                  checked={isPublic}
+                  onChange={(event) => setIsPublic(event.target.checked)}
+                  className="h-5 w-5 rounded border-[color:var(--line)] text-[color:var(--accent)]"
+                />
+              </label>
+            </div>
 
-              {/* Skills Section */}
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-gray-900 border-b border-gray-200 pb-2">
-                  Skills
-                </h2>
-                <div className="space-y-3">
-                  {skills.map((skill, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <input
-                        type="text"
-                        className="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                        placeholder="e.g., JavaScript, React, Node.js"
-                        value={skill}
-                        onChange={(e) => handleSkillChange(idx, e.target.value)}
-                      />
-                      {skills.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeSkill(idx)}
-                          className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={addSkill}
-                    className="text-indigo-600 hover:text-indigo-800 font-medium text-sm"
-                  >
-                    + Add Skill
-                  </button>
-                </div>
-              </div>
+            {error && <p className="rounded-[1.5rem] bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
+            {message && <p className="rounded-[1.5rem] bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</p>}
 
-              {/* Experience Section */}
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-gray-900 border-b border-gray-200 pb-2">
-                  Work Experience
-                </h2>
-                <div className="space-y-6">
-                  {experience.map((exp, idx) => (
-                    <div key={idx} className="bg-gray-50 rounded-lg p-4 space-y-3">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-semibold text-gray-900">Experience {idx + 1}</h3>
-                        {experience.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeExp(idx)}
-                            className="text-red-600 hover:bg-red-50 p-1 rounded"
-                          >
-                            ✕
-                          </button>
-                        )}
-                      </div>
-                      <div className="grid md:grid-cols-2 gap-3">
-                        <input
-                          type="text"
-                          className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                          placeholder="Company Name"
-                          value={exp.company}
-                          onChange={(e) => handleExpChange(idx, "company", e.target.value)}
-                        />
-                        <input
-                          type="text"
-                          className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                          placeholder="Job Title"
-                          value={exp.role}
-                          onChange={(e) => handleExpChange(idx, "role", e.target.value)}
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                        placeholder="Duration (e.g., 2020-2023)"
-                        value={exp.years}
-                        onChange={(e) => handleExpChange(idx, "years", e.target.value)}
-                      />
-                      <textarea
-                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                        placeholder="Job description and key achievements..."
-                        value={exp.description}
-                        onChange={(e) => handleExpChange(idx, "description", e.target.value)}
-                        rows={3}
-                      />
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={addExp}
-                    className="text-indigo-600 hover:text-indigo-800 font-medium text-sm"
-                  >
-                    + Add Experience
-                  </button>
-                </div>
-              </div>
-
-              {/* Education Section */}
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-gray-900 border-b border-gray-200 pb-2">
-                  Education
-                </h2>
-                <div className="space-y-6">
-                  {education.map((edu, idx) => (
-                    <div key={idx} className="bg-gray-50 rounded-lg p-4 space-y-3">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-semibold text-gray-900">Education {idx + 1}</h3>
-                        {education.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeEdu(idx)}
-                            className="text-red-600 hover:bg-red-50 p-1 rounded"
-                          >
-                            ✕
-                          </button>
-                        )}
-                      </div>
-                      <div className="grid md:grid-cols-2 gap-3">
-                        <input
-                          type="text"
-                          className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                          placeholder="School/University"
-                          value={edu.school}
-                          onChange={(e) => handleEduChange(idx, "school", e.target.value)}
-                        />
-                        <input
-                          type="text"
-                          className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                          placeholder="Degree"
-                          value={edu.degree}
-                          onChange={(e) => handleEduChange(idx, "degree", e.target.value)}
-                        />
-                      </div>
-                      <div className="grid md:grid-cols-2 gap-3">
-                        <input
-                          type="text"
-                          className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                          placeholder="Years (e.g., 2018-2022)"
-                          value={edu.years}
-                          onChange={(e) => handleEduChange(idx, "years", e.target.value)}
-                        />
-                        <input
-                          type="text"
-                          className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                          placeholder="GPA (optional)"
-                          value={edu.gpa}
-                          onChange={(e) => handleEduChange(idx, "gpa", e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={addEdu}
-                    className="text-indigo-600 hover:text-indigo-800 font-medium text-sm"
-                  >
-                    + Add Education
-                  </button>
-                </div>
-              </div>
-
-              {/* Projects Section */}
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-gray-900 border-b border-gray-200 pb-2">
-                  Projects
-                </h2>
-                <div className="space-y-6">
-                  {projects.map((proj, idx) => (
-                    <div key={idx} className="bg-gray-50 rounded-lg p-4 space-y-3">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-semibold text-gray-900">Project {idx + 1}</h3>
-                        {projects.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeProj(idx)}
-                            className="text-red-600 hover:bg-red-50 p-1 rounded"
-                          >
-                            ✕
-                          </button>
-                        )}
-                      </div>
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                        placeholder="Project Name"
-                        value={proj.name}
-                        onChange={(e) => handleProjChange(idx, "name", e.target.value)}
-                      />
-                      <textarea
-                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                        placeholder="Project description and key features..."
-                        value={proj.description}
-                        onChange={(e) => handleProjChange(idx, "description", e.target.value)}
-                        rows={3}
-                      />
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                        placeholder="Technologies used (e.g., React, Node.js, MongoDB)"
-                        value={proj.technologies}
-                        onChange={(e) => handleProjChange(idx, "technologies", e.target.value)}
-                      />
-                      <div className="grid md:grid-cols-2 gap-3">
-                        <input
-                          type="url"
-                          className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                          placeholder="Live Demo URL"
-                          value={proj.link}
-                          onChange={(e) => handleProjChange(idx, "link", e.target.value)}
-                        />
-                        <input
-                          type="url"
-                          className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                          placeholder="GitHub Repository URL"
-                          value={proj.github}
-                          onChange={(e) => handleProjChange(idx, "github", e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={addProj}
-                    className="text-indigo-600 hover:text-indigo-800 font-medium text-sm"
-                  >
-                    + Add Project
-                  </button>
-                </div>
-              </div>
-
-              {/* Success/Error Message */}
-              {message && (
-                <div className={`p-3 rounded-lg mb-6 ${
-                  message.includes("successfully") 
-                    ? "bg-green-50 border border-green-200 text-green-600" 
-                    : "bg-red-50 border border-red-200 text-red-600"
-                }`}>
-                  {message}
-                </div>
-              )}
-
-              {/* Submit Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  {isSaving ? "Saving..." : "Save Resume"}
-                </button>
-                <button
-                  type="button"
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
-                >
-                  Preview & Download
-                </button>
-              </div>
-            </form>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="rounded-full bg-[color:var(--accent)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[color:var(--accent-strong)] disabled:opacity-60"
+              >
+                {saving ? "Saving..." : portfolioId ? "Save changes" : "Create portfolio"}
+              </button>
+              <Link
+                href="/dashboard"
+                className="rounded-full border border-[color:var(--line)] bg-white px-6 py-3 text-center text-sm font-semibold text-slate-800"
+              >
+                Back to dashboard
+              </Link>
+            </div>
           </div>
+        </section>
 
-          {/* Live Preview Section */}
-          <div className="lg:sticky lg:top-8 lg:h-fit">
-            <PortfolioPreview
-              name={name}
-              title={title}
-              email={email}
-              phone={phone}
-              location={location}
-              website={website}
-              bio={bio}
-              skills={skills.filter(skill => skill.trim() !== "")}
-              experience={experience}
-              education={education}
-              projects={projects}
-              template={template}
+        <aside className="shell-card rounded-[2rem] p-6 sm:p-8 lg:sticky lg:top-24 lg:h-fit">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[color:var(--accent-strong)]">
+            Live preview
+          </p>
+          <div className="mt-6 rounded-[1.75rem] border border-[color:var(--line)] bg-white p-6">
+            <h2 className="text-3xl font-semibold text-slate-950">{name || "Your name"}</h2>
+            <p className="mt-2 text-lg text-slate-700">{title || "Your professional title"}</p>
+
+            <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-600">
+              {email && <span>{email}</span>}
+              {location && <span>{location}</span>}
+              {website && <span>{website}</span>}
+            </div>
+
+            {bio && (
+              <div className="mt-8">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Summary</h3>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-700">{bio}</p>
+              </div>
+            )}
+
+            {normalizedSkills.length > 0 && (
+              <div className="mt-8">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Skills</h3>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {normalizedSkills.map((skill) => (
+                    <span key={skill} className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <PreviewList
+              title="Experience"
+              items={experience
+                .filter((item) => item.company || item.role || item.description)
+                .map((item) => ({
+                  heading: item.role || "Role",
+                  subheading: item.company || "Company",
+                  body: item.description,
+                }))}
             />
+            <PreviewList
+              title="Projects"
+              items={projects
+                .filter((item) => item.name || item.description)
+                .map((item) => ({
+                  heading: item.name || "Project",
+                  subheading: item.technologies,
+                  body: item.description,
+                }))}
+            />
+            <PreviewList
+              title="Education"
+              items={education
+                .filter((item) => item.school || item.degree || item.field)
+                .map((item) => ({
+                  heading: item.degree || "Degree",
+                  subheading: [item.school, item.field].filter(Boolean).join(" · "),
+                  body: item.description,
+                }))}
+            />
+            {(linkedin || github) && (
+              <div className="mt-8">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Links</h3>
+                <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                  {website && <a href={website} className="text-[color:var(--accent-strong)]">{website}</a>}
+                  {linkedin && <a href={linkedin} className="text-[color:var(--accent-strong)]">{linkedin}</a>}
+                  {github && <a href={github} className="text-[color:var(--accent-strong)]">{github}</a>}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        </aside>
       </div>
     </main>
   );
 }
 
-export default function EditorPage() {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-      <EditorPageInner />
-    </Suspense>
+    <section>
+      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+      <div className="mt-4 space-y-4">{children}</div>
+    </section>
   );
 }
 
-// PortfolioPreview: presentational component for live preview
-function PortfolioPreview({
-  name,
-  title,
-  email,
-  phone,
-  location,
-  website,
-  bio,
-  skills,
-  experience,
-  education,
-  projects,
-  template,
+function TwoColumn({ children }: { children: ReactNode }) {
+  return <div className="grid gap-4 md:grid-cols-2">{children}</div>;
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
 }: {
-  name: string;
-  title: string;
-  email: string;
-  phone: string;
-  location: string;
-  website: string;
-  bio: string;
-  skills: string[];
-  experience: { company: string; role: string; years: string; description: string }[];
-  education: { school: string; degree: string; years: string; gpa: string }[];
-  projects: { name: string; description: string; technologies: string; link: string; github: string }[];
-  template?: string | null;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
 }) {
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8 h-fit">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Live Preview</h2>
-        <div className="text-sm text-gray-500">
-          {template && `Template: ${template}`}
-        </div>
-      </div>
-      
-      <div className="bg-gray-50 rounded-xl p-6 space-y-6 max-h-[80vh] overflow-y-auto">
-        {/* Header */}
-        <div className="text-center border-b border-gray-200 pb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {name || "Your Name"}
-          </h1>
-          <p className="text-xl text-indigo-600 mb-4">
-            {title || "Your Professional Title"}
-          </p>
-          
-          {/* Contact Info */}
-          <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
-            {email && (
-              <span className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                {email}
-              </span>
-            )}
-            {phone && (
-              <span className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                {phone}
-              </span>
-            )}
-            {location && (
-              <span className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {location}
-              </span>
-            )}
-            {website && (
-              <span className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9m0 9c-5 0-9-4-9-9s4-9 9-9" />
-                </svg>
-                <a href={website} className="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer">
-                  {website.replace(/^https?:\/\//, '')}
-                </a>
-              </span>
+    <label className="block">
+      <span className="mb-2 block text-sm font-semibold text-slate-800">{label}</span>
+      <input
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-[color:var(--accent)]"
+      />
+    </label>
+  );
+}
+
+function Collection<T>({
+  items,
+  addLabel,
+  onAdd,
+  onRemove,
+  renderItem,
+}: {
+  items: T[];
+  addLabel: string;
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+  renderItem: (item: T, index: number) => React.ReactNode;
+}) {
+  return (
+    <div className="space-y-4">
+      {items.map((item, index) => (
+        <div key={index} className="rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-sm font-semibold text-slate-900">Entry {index + 1}</p>
+            {items.length > 1 && (
+              <button
+                type="button"
+                onClick={() => onRemove(index)}
+                className="text-sm font-semibold text-red-700"
+              >
+                Remove
+              </button>
             )}
           </div>
+          <div className="space-y-4">{renderItem(item, index)}</div>
         </div>
+      ))}
+      <button type="button" onClick={onAdd} className="rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm font-semibold text-slate-800">
+        {addLabel}
+      </button>
+    </div>
+  );
+}
 
-        {/* Professional Summary */}
-        {bio && (
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-3">Professional Summary</h3>
-            <p className="text-gray-700 leading-relaxed">{bio}</p>
+function PreviewList({
+  title,
+  items,
+}: {
+  title: string;
+  items: { heading: string; subheading?: string; body?: string }[];
+}) {
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-8">
+      <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">{title}</h3>
+      <div className="mt-4 space-y-4">
+        {items.map((item, index) => (
+          <div key={`${item.heading}-${index}`} className="border-l border-[color:var(--line)] pl-4">
+            <p className="font-semibold text-slate-950">{item.heading}</p>
+            {item.subheading && <p className="text-sm text-[color:var(--accent-strong)]">{item.subheading}</p>}
+            {item.body && <p className="mt-2 text-sm leading-6 text-slate-700">{item.body}</p>}
           </div>
-        )}
-
-        {/* Skills */}
-        {skills.length > 0 && (
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-3">Skills</h3>
-            <div className="flex flex-wrap gap-2">
-              {skills.map((skill, idx) => (
-                <span
-                  key={idx}
-                  className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Experience */}
-        <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-3">Work Experience</h3>
-          {experience.filter((e) => e.company || e.role || e.years).length === 0 ? (
-            <p className="text-gray-600 italic">No experience added yet.</p>
-          ) : (
-            <div className="space-y-4">
-              {experience.map((exp, idx) => (
-                <div key={idx} className="border-l-2 border-indigo-200 pl-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1">
-                    <h4 className="font-semibold text-gray-900">
-                      {exp.role || "Job Title"}
-                    </h4>
-                    <span className="text-sm text-gray-500">{exp.years}</span>
-                  </div>
-                  <p className="text-indigo-600 font-medium mb-2">
-                    {exp.company || "Company Name"}
-                  </p>
-                  {exp.description && (
-                    <p className="text-gray-700 text-sm">{exp.description}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Education */}
-        <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-3">Education</h3>
-          {education.filter((e) => e.school || e.degree || e.years).length === 0 ? (
-            <p className="text-gray-600 italic">No education added yet.</p>
-          ) : (
-            <div className="space-y-4">
-              {education.map((edu, idx) => (
-                <div key={idx} className="border-l-2 border-indigo-200 pl-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1">
-                    <h4 className="font-semibold text-gray-900">
-                      {edu.degree || "Degree"}
-                    </h4>
-                    <span className="text-sm text-gray-500">{edu.years}</span>
-                  </div>
-                  <p className="text-indigo-600 font-medium">
-                    {edu.school || "School/University"}
-                  </p>
-                  {edu.gpa && (
-                    <p className="text-gray-600 text-sm">GPA: {edu.gpa}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Projects */}
-        <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-3">Projects</h3>
-          {projects.filter((p) => p.name || p.description).length === 0 ? (
-            <p className="text-gray-600 italic">No projects added yet.</p>
-          ) : (
-            <div className="space-y-4">
-              {projects.map((proj, idx) => (
-                <div key={idx} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-semibold text-gray-900">
-                      {proj.name || "Project Name"}
-                    </h4>
-                    <div className="flex gap-2">
-                      {proj.link && (
-                        <a
-                          href={proj.link}
-                          className="text-indigo-600 hover:text-indigo-800 text-sm"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Live Demo
-                        </a>
-                      )}
-                      {proj.github && (
-                        <a
-                          href={proj.github}
-                          className="text-gray-600 hover:text-gray-800 text-sm"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          GitHub
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                  {proj.description && (
-                    <p className="text-gray-700 text-sm mb-2">{proj.description}</p>
-                  )}
-                  {proj.technologies && (
-                    <div className="flex flex-wrap gap-1">
-                      {proj.technologies.split(',').map((tech, techIdx) => (
-                        <span
-                          key={techIdx}
-                          className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs"
-                        >
-                          {tech.trim()}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        ))}
       </div>
     </div>
+  );
+}
+
+export default function EditorPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-[70vh] items-center justify-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-[color:var(--accent)] border-t-transparent" />
+        </main>
+      }
+    >
+      <EditorContent />
+    </Suspense>
   );
 }

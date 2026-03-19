@@ -44,10 +44,17 @@ func (h *PortfolioHandler) CreatePortfolio(c *gin.Context) {
 
 func (h *PortfolioHandler) GetPortfolio(c *gin.Context) {
 	id := c.Param("id")
-	
-	portfolio, err := h.portfolioUsecase.GetPortfolio(c.Request.Context(), id)
+
+	requesterID, _ := c.Get("user_id")
+	requesterIDStr, _ := requesterID.(string)
+
+	portfolio, err := h.portfolioUsecase.GetPortfolio(c.Request.Context(), id, requesterIDStr)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		status := http.StatusNotFound
+		if err.Error() == "portfolio is private" {
+			status = http.StatusForbidden
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
 

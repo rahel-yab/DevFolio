@@ -1,4 +1,9 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://devfolio-wnxg.onrender.com/';
+const rawApiBaseUrl =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+const API_BASE_URL = rawApiBaseUrl.replace(/\/+$/, "");
+const HEALTH_BASE_URL = API_BASE_URL.endsWith("/api/v1")
+  ? API_BASE_URL.slice(0, -"/api/v1".length)
+  : API_BASE_URL;
 
 // Types based on backend entities
 export interface User {
@@ -90,6 +95,11 @@ export interface LoginResponse {
   access_token: string;
 }
 
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
+}
+
 export interface CreatePortfolioRequest {
   name: string;
   title: string;
@@ -105,6 +115,7 @@ export interface CreatePortfolioRequest {
   projects?: Project[];
   skills?: string[];
   template?: string;
+  is_public?: boolean;
 }
 
 export interface UpdatePortfolioRequest {
@@ -126,17 +137,37 @@ export interface UpdatePortfolioRequest {
 }
 
 class ApiService {
+  private getStoredToken(): string | null {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    return window.localStorage.getItem("access_token");
+  }
+
+  private setStoredToken(token: string) {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("access_token", token);
+    }
+  }
+
+  private clearStoredToken() {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("access_token");
+    }
+  }
+
   private getAuthHeaders(): HeadersInit {
-    const token = localStorage.getItem('access_token');
+    const token = this.getStoredToken();
     return {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
     };
   }
 
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Network error' }));
+      const errorData = await response.json().catch(() => ({ error: "Network error" }));
       throw new Error(errorData.error || `HTTP ${response.status}`);
     }
     
@@ -144,146 +175,149 @@ class ApiService {
     return data.data || data;
   }
 
-  // Auth endpoints
-  async login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(credentials),
-      credentials: 'include',
+  private async request<T>(
+    path: string,
+    init: RequestInit = {},
+    retryOnAuth = true
+  ): Promise<T> {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      headers: {
+        ...(init.body ? { "Content-Type": "application/json" } : {}),
+        ...this.getAuthHeaders(),
+        ...init.headers,
+      },
+      credentials: "include",
     });
-    
-    const result = await this.handleResponse<LoginResponse>(response);
-    
-    // Store access token
-    if (result.access_token) {
-      localStorage.setItem('access_token', result.access_token);
+
+    if (response.status === 401 && retryOnAuth && this.getStoredToken()) {
+      try {
+        await this.refreshToken();
+        return this.request<T>(path, init, false);
+      } catch {
+        this.clearStoredToken();
+      }
     }
-    
+
+    return this.handleResponse<T>(response);
+  }
+
+  async login(credentials: LoginRequest): Promise<LoginResponse> {
+    const result = await this.request<LoginResponse>(
+      "/auth/login",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+      },
+      false
+    );
+
+    if (result.access_token) {
+      this.setStoredToken(result.access_token);
+    }
+
     return result;
   }
 
   async register(userData: RegisterRequest): Promise<LoginResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData),
-      credentials: 'include',
-    });
-    
-    const result = await this.handleResponse<LoginResponse>(response);
-    
-    // Store access token
+    const result = await this.request<LoginResponse>(
+      "/auth/register",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+      },
+      false
+    );
+
     if (result.access_token) {
-      localStorage.setItem('access_token', result.access_token);
+      this.setStoredToken(result.access_token);
     }
-    
+
     return result;
   }
 
   async logout(): Promise<void> {
     try {
-      await fetch(`${API_BASE_URL}/auth/logout`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        credentials: 'include',
-      });
+      await this.request<void>(
+        "/auth/logout",
+        {
+          method: "POST",
+        },
+        false
+      );
     } finally {
-      localStorage.removeItem('access_token');
+      this.clearStoredToken();
     }
   }
 
   async getProfile(): Promise<User> {
-    const response = await fetch(`${API_BASE_URL}/auth/profile`, {
-      headers: this.getAuthHeaders(),
-      credentials: 'include',
-    });
-    
-    return this.handleResponse<User>(response);
+    return this.request<User>("/auth/profile");
   }
 
   async updateProfile(updates: Partial<User>): Promise<User> {
-    const response = await fetch(`${API_BASE_URL}/auth/profile`, {
-      method: 'PUT',
-      headers: this.getAuthHeaders(),
+    return this.request<User>("/auth/profile", {
+      method: "PUT",
       body: JSON.stringify(updates),
-      credentials: 'include',
     });
-    
-    return this.handleResponse<User>(response);
+  }
+
+  async changePassword(payload: ChangePasswordRequest): Promise<void> {
+    await this.request<void>("/auth/change-password", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
   }
 
   async refreshToken(): Promise<{ access_token: string }> {
     const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-      method: 'POST',
-      credentials: 'include',
+      method: "POST",
+      credentials: "include",
     });
-    
+
     const result = await this.handleResponse<{ access_token: string }>(response);
-    
+
     if (result.access_token) {
-      localStorage.setItem('access_token', result.access_token);
+      this.setStoredToken(result.access_token);
     }
-    
+
     return result;
   }
 
-  // Portfolio endpoints
   async getUserPortfolios(): Promise<Portfolio[]> {
-    const response = await fetch(`${API_BASE_URL}/portfolios/user`, {
-      headers: this.getAuthHeaders(),
-      credentials: 'include',
-    });
-    
-    return this.handleResponse<Portfolio[]>(response);
+    return this.request<Portfolio[]>("/portfolios/user");
   }
 
   async getPortfolio(id: string): Promise<Portfolio> {
-    const response = await fetch(`${API_BASE_URL}/portfolios/${id}`, {
-      headers: this.getAuthHeaders(),
-      credentials: 'include',
-    });
-    
-    return this.handleResponse<Portfolio>(response);
+    return this.request<Portfolio>(`/portfolios/${id}`);
   }
 
   async createPortfolio(portfolioData: CreatePortfolioRequest): Promise<Portfolio> {
-    const response = await fetch(`${API_BASE_URL}/portfolios`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
+    return this.request<Portfolio>("/portfolios", {
+      method: "POST",
       body: JSON.stringify(portfolioData),
-      credentials: 'include',
     });
-    
-    return this.handleResponse<Portfolio>(response);
   }
 
   async updatePortfolio(id: string, updates: UpdatePortfolioRequest): Promise<Portfolio> {
-    const response = await fetch(`${API_BASE_URL}/portfolios/${id}`, {
-      method: 'PUT',
-      headers: this.getAuthHeaders(),
+    return this.request<Portfolio>(`/portfolios/${id}`, {
+      method: "PUT",
       body: JSON.stringify(updates),
-      credentials: 'include',
     });
-    
-    return this.handleResponse<Portfolio>(response);
   }
 
   async deletePortfolio(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/portfolios/${id}`, {
-      method: 'DELETE',
-      headers: this.getAuthHeaders(),
-      credentials: 'include',
+    await this.request<void>(`/portfolios/${id}`, {
+      method: "DELETE",
     });
-    
-    await this.handleResponse<void>(response);
   }
 
   async getPublicPortfolios(limit = 10, offset = 0): Promise<Portfolio[]> {
     const response = await fetch(
       `${API_BASE_URL}/portfolios/public?limit=${limit}&offset=${offset}`
     );
-    
+
     return this.handleResponse<Portfolio[]>(response);
   }
 
@@ -291,29 +325,28 @@ class ApiService {
     const response = await fetch(
       `${API_BASE_URL}/portfolios/search?q=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`
     );
-    
+
     return this.handleResponse<Portfolio[]>(response);
   }
 
-  async enhanceWithAI(portfolioId: string, fields: string[], context?: any): Promise<Portfolio> {
-    const response = await fetch(`${API_BASE_URL}/portfolios/enhance`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
+  async enhanceWithAI(portfolioId: string, fields: string[], context?: unknown): Promise<Portfolio> {
+    return this.request<Portfolio>("/portfolios/enhance", {
+      method: "POST",
       body: JSON.stringify({
         portfolio_id: portfolioId,
         fields,
         context,
       }),
-      credentials: 'include',
     });
-    
-    return this.handleResponse<Portfolio>(response);
   }
 
-  // Health check
   async healthCheck(): Promise<{ status: string; message: string }> {
-    const response = await fetch(`${API_BASE_URL.replace('/api/v1', '')}/health`);
+    const response = await fetch(`${HEALTH_BASE_URL}/health`);
     return this.handleResponse<{ status: string; message: string }>(response);
+  }
+
+  getGoogleLoginUrl(): string {
+    return `${API_BASE_URL}/auth/google/login`;
   }
 }
 

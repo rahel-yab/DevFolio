@@ -9,6 +9,8 @@ type User struct {
 	ID           primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	Email        string            `json:"email" bson:"email"`
 	Password     string            `json:"-" bson:"password"` // Never include in JSON responses
+	AuthProvider string            `json:"auth_provider,omitempty" bson:"auth_provider,omitempty"`
+	GoogleID     string            `json:"google_id,omitempty" bson:"google_id,omitempty"`
 	FirstName    string            `json:"first_name" bson:"first_name"`
 	LastName     string            `json:"last_name" bson:"last_name"`
 	Avatar       string            `json:"avatar" bson:"avatar"`
@@ -40,6 +42,14 @@ type LoginRequest struct {
 type LoginResponse struct {
 	User        *User  `json:"user"`
 	AccessToken string `json:"access_token"`
+}
+
+type GoogleProfile struct {
+	GoogleID  string
+	Email     string
+	FirstName string
+	LastName  string
+	Avatar    string
 }
 
 type RefreshTokenRequest struct {

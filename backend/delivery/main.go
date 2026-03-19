@@ -5,6 +5,7 @@ import (
 
 	ctrl "devfolio-backend/delivery/controller"
 	"devfolio-backend/delivery/router"
+	domainrepo "devfolio-backend/domain/repositories"
 	"devfolio-backend/infrastructure/ai"
 	"devfolio-backend/infrastructure/auth"
 	"devfolio-backend/infrastructure/config"
@@ -20,16 +21,30 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	// Initialize MongoDB
+	var (
+		portfolioRepo domainrepo.PortfolioRepository
+		userRepo      domainrepo.UserRepository
+	)
+
+	// Initialize MongoDB, but fall back to in-memory repositories when it is unavailable.
 	db, err := database.NewMongoDB(cfg)
 	if err != nil {
-		log.Fatalf("Failed to connect to MongoDB: %v", err)
+		log.Printf("MongoDB unavailable, using in-memory repositories instead: %v", err)
+		log.Printf("Development data will reset when the server restarts.")
+
+		store := repositories.NewMemoryStore()
+		portfolioRepo = repositories.NewMemoryPortfolioRepository(store)
+		userRepo = repositories.NewMemoryUserRepository(store)
+	} else {
+		defer func() {
+			if err := db.Close(); err != nil {
+				log.Printf("Error closing database connection: %v", err)
+			}
+		}()
+
+		portfolioRepo = repositories.NewPortfolioRepository(db)
+		userRepo = repositories.NewUserRepository(db)
 	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			log.Printf("Error closing database connection: %v", err)
-		}
-	}()
 
 	// Initialize AI client
 	aiClient := ai.NewOpenAIClient(cfg)
@@ -40,10 +55,6 @@ func main() {
 		log.Fatalf("Failed to initialize JWT manager: %v", err)
 	}
 	passwordManager := auth.NewPasswordManager()
-
-	// Initialize repositories
-	portfolioRepo := repositories.NewPortfolioRepository(db)
-	userRepo := repositories.NewUserRepository(db)
 
 	// Initialize use cases
 	portfolioUsecase := usecase.NewPortfolioUsecase(portfolioRepo, aiClient)

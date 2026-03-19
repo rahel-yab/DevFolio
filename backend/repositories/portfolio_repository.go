@@ -68,8 +68,19 @@ func (r *portfolioRepository) GetByUserID(ctx context.Context, userID string) ([
 
 func (r *portfolioRepository) Update(ctx context.Context, id primitive.ObjectID, portfolio *entities.Portfolio) error {
 	portfolio.UpdatedAt = time.Now()
-	
-	update := bson.M{"$set": portfolio}
+
+	updateDoc, err := bson.Marshal(portfolio)
+	if err != nil {
+		return fmt.Errorf("failed to marshal portfolio update: %w", err)
+	}
+
+	var setFields bson.M
+	if err := bson.Unmarshal(updateDoc, &setFields); err != nil {
+		return fmt.Errorf("failed to prepare portfolio update: %w", err)
+	}
+	delete(setFields, "_id")
+
+	update := bson.M{"$set": setFields}
 	result, err := r.collection.UpdateOne(ctx, bson.M{"_id": id}, update)
 	if err != nil {
 		return fmt.Errorf("failed to update portfolio: %w", err)
