@@ -21,6 +21,11 @@ export default function Header() {
   const initials = `${user?.first_name?.[0] || ""}${user?.last_name?.[0] || ""}` || "DF";
 
   const handleLogout = async () => {
+    const confirmed = window.confirm("Are you sure you want to sign out?");
+    if (!confirmed) {
+      return;
+    }
+
     await logout();
     setIsMenuOpen(false);
     router.push("/login");
