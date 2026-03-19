@@ -26,6 +26,8 @@ export default function Header() {
       return;
     }
 
+    
+
     await logout();
     setIsMenuOpen(false);
     router.push("/login");
