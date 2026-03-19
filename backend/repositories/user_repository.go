@@ -29,7 +29,9 @@ func (r *userRepository) Create(ctx context.Context, user *entities.User) error 
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
 	user.IsActive = true
-	user.IsVerified = false // Email verification can be implemented later
+	if user.AuthProvider == "" {
+		user.AuthProvider = "local"
+	}
 
 	_, err := r.collection.InsertOne(ctx, user)
 	if err != nil {
@@ -67,8 +69,19 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*entitie
 
 func (r *userRepository) Update(ctx context.Context, id primitive.ObjectID, user *entities.User) error {
 	user.UpdatedAt = time.Now()
-	
-	update := bson.M{"$set": user}
+
+	updateDoc, err := bson.Marshal(user)
+	if err != nil {
+		return fmt.Errorf("failed to marshal user update: %w", err)
+	}
+
+	var setFields bson.M
+	if err := bson.Unmarshal(updateDoc, &setFields); err != nil {
+		return fmt.Errorf("failed to prepare user update: %w", err)
+	}
+	delete(setFields, "_id")
+
+	update := bson.M{"$set": setFields}
 	result, err := r.collection.UpdateOne(ctx, bson.M{"_id": id, "is_active": true}, update)
 	if err != nil {
 		return fmt.Errorf("failed to update user: %w", err)

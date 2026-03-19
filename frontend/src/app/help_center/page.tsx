@@ -1,131 +1,123 @@
 "use client";
+
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 
-// 1. Data Structure for your FAQs
-const FAQ_DATA = {
+const faqData = {
   "Getting Started": [
-    { q: "How do I create my first portfolio?", a: "Once logged in, go to your Dashboard and click 'Create New'. Our AI will guide you through the initial setup." },
-    { q: "Can I import data from GitHub?", a: "Yes! In the editor, you can link your GitHub profile to automatically pull in your repositories and contributions." },
-    { q: "Is DevFolio free for students?", a: "DevFolio is free for everyone. We offer a Pro tier for custom domains and advanced analytics." }
+    {
+      q: "How do I create my first portfolio?",
+      a: "Choose a template, open the editor, fill in your profile and projects, then save your first draft from the editor screen.",
+    },
+    {
+      q: "Can I keep a portfolio private while editing?",
+      a: "Yes. New portfolios start as drafts, and you can publish them only when you toggle the public setting on.",
+    },
+    {
+      q: "Do I need AI to use DevFolio?",
+      a: "No. AI enhancement is optional. You can write everything manually and still publish a full portfolio.",
+    },
   ],
   "Account & Profile": [
-    { q: "How do I change my password?", a: "Go to Account Settings from your dashboard dropdown to update your security credentials." },
-    { q: "Can I delete my account?", a: "Yes, you can find the 'Delete Account' option at the bottom of the Settings page. This action is permanent." }
+    {
+      q: "How do I change my password?",
+      a: "Open Settings, enter your current password, choose a new one, and save it from the password form.",
+    },
+    {
+      q: "Where do I update my profile links?",
+      a: "Open the Profile page to update your bio, phone, location, website, GitHub, and LinkedIn links.",
+    },
   ],
   "Portfolio Editor": [
-    { q: "How do I change the theme?", a: "Inside the editor, click the 'Design' tab on the left sidebar to toggle between different professional themes." },
-    { q: "Can I use custom CSS?", a: "Custom CSS is currently a Pro feature available in the Design settings." }
+    {
+      q: "Can I edit an existing portfolio?",
+      a: "Yes. Open the dashboard and choose Edit on any draft or published portfolio to continue working.",
+    },
+    {
+      q: "What does the AI enhancement button do?",
+      a: "Right now it focuses on improving your summary. Save the portfolio first, then use the AI enhancement action in the editor.",
+    },
   ],
-  "Custom Domains": [
-    { q: "How do I connect my own domain?", a: "In the 'Publish' settings, enter your domain name and follow the DNS instructions provided." },
-    { q: "Do you provide SSL certificates?", a: "Yes, all portfolios hosted on DevFolio (including custom domains) get free SSL certificates." }
-  ]
-};
+  Publishing: [
+    {
+      q: "How do I share my portfolio publicly?",
+      a: "Save the portfolio with the public toggle enabled. Once published, the dashboard will show an Open public page action.",
+    },
+    {
+      q: "Can I turn a public portfolio back into a draft?",
+      a: "Yes. Reopen it in the editor, disable the public toggle, and save again.",
+    },
+  ],
+} as const;
 
-const categories = [
-  { title: "Getting Started", icon: "🚀", count: 3 },
-  { title: "Account & Profile", icon: "👤", count: 2 },
-  { title: "Portfolio Editor", icon: "🎨", count: 2 },
-  { title: "Custom Domains", icon: "🌐", count: 2 },
-];
+const categories = Object.keys(faqData) as Array<keyof typeof faqData>;
 
 export default function HelpCenterPage() {
-  const [activeCategory, setActiveCategory] = useState<string>("Getting Started");
+  const [activeCategory, setActiveCategory] = useState<keyof typeof faqData>("Getting Started");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Filter categories based on search (Simple version)
-  const filteredCategories = categories.filter(cat => 
-    cat.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const visibleCategories = categories.filter((category) =>
+    category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4 pb-20">
-      {/* Navigation Header */}
-      <div className="max-w-6xl mx-auto pt-8 mb-12">
-        <div className="flex justify-between items-center">
-          <Link href="/" className="inline-flex items-center space-x-3">
-            <div className="relative">
-              <Image src="/logo.png" alt="DevFolio Logo" width={40} height={40} className="rounded-xl" />
-              <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl blur opacity-25"></div>
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              DevFolio
-            </span>
-          </Link>
-          <Link href="/dashboard" className="text-sm font-semibold text-indigo-600 hover:text-indigo-800">
-            Go to Dashboard
+    <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <section className="shell-card rounded-[2.25rem] p-8 sm:p-10">
+        <span className="eyebrow">Help center</span>
+        <div className="mt-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-4xl font-semibold tracking-tight text-slate-950">Find the quickest path through the product</h1>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-700">
+              These answers reflect the current version of DevFolio, including the updated dashboard, editor, public portfolio pages, and settings flow.
+            </p>
+          </div>
+          <Link href="/contact" className="text-sm font-semibold text-[color:var(--accent-strong)]">
+            Contact support
           </Link>
         </div>
-      </div>
 
-      {/* Hero Search */}
-      <div className="max-w-3xl mx-auto text-center mb-16">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-4">How can we help?</h1>
-        <div className="relative">
+        <div className="mt-8">
           <input
             type="text"
-            placeholder="Search for articles..."
-            className="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl shadow-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-gray-900"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search sections..."
+            className="w-full rounded-[1.75rem] border border-[color:var(--line)] bg-white px-5 py-4 text-slate-900 outline-none transition focus:border-[color:var(--accent)]"
           />
         </div>
-      </div>
+      </section>
 
-      {/* Main Content: 4-Column Grid for Categories */}
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        {filteredCategories.map((cat) => (
-          <button
-            key={cat.title}
-            onClick={() => setActiveCategory(cat.title)}
-            className={`p-8 rounded-2xl border transition-all text-left group ${
-              activeCategory === cat.title 
-                ? "border-indigo-600 bg-white shadow-xl ring-2 ring-indigo-600/10" 
-                : "border-gray-100 bg-white shadow-sm hover:shadow-md hover:-translate-y-1"
-            }`}
-          >
-            <div className="text-4xl mb-4 group-hover:scale-110 transition-transform inline-block">
-              {cat.icon}
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-1">{cat.title}</h3>
-            <p className="text-gray-500 text-sm">{cat.count} Articles</p>
-          </button>
-        ))}
-      </div>
+      <div className="mt-8 grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="grid gap-4">
+          {visibleCategories.map((category) => (
+            <button
+              key={category}
+              onClick={() => setActiveCategory(category)}
+              className={`rounded-[1.75rem] border p-6 text-left transition ${
+                activeCategory === category
+                  ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)]"
+                  : "shell-card"
+              }`}
+            >
+              <p className="text-lg font-semibold text-slate-950">{category}</p>
+              <p className="mt-2 text-sm text-slate-700">{faqData[category].length} quick answers</p>
+            </button>
+          ))}
+        </section>
 
-      {/* Dynamic FAQ Display Area */}
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm min-h-[400px]">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center">
-            <span className="mr-3">{categories.find(c => c.title === activeCategory)?.icon}</span>
-            {activeCategory} Articles
-          </h2>
-          
-          <div className="space-y-6">
-            {FAQ_DATA[activeCategory as keyof typeof FAQ_DATA]?.map((faq, index) => (
-              <div key={index} className="group border-b border-gray-50 pb-6 last:border-0">
-                <h4 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
-                  {faq.q}
-                </h4>
-                <p className="text-gray-600 leading-relaxed">
-                  {faq.a}
-                </p>
-              </div>
+        <section className="shell-card rounded-[2rem] p-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[color:var(--accent-strong)]">
+            {activeCategory}
+          </p>
+          <div className="mt-6 space-y-5">
+            {faqData[activeCategory].map((faq) => (
+              <article key={faq.q} className="rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 p-5">
+                <h2 className="text-lg font-semibold text-slate-950">{faq.q}</h2>
+                <p className="mt-3 text-sm leading-7 text-slate-700">{faq.a}</p>
+              </article>
             ))}
           </div>
-        </div>
-
-        {/* Support Footer */}
-        <div className="mt-12 text-center bg-indigo-900 rounded-3xl p-10 text-white shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-          <h2 className="text-2xl font-bold mb-2">Can't find what you're looking for?</h2>
-          <p className="text-indigo-100 mb-6">Our support engineers are available 24/7 to help you.</p>
-          <button className="px-8 py-3 bg-white text-indigo-900 rounded-xl font-bold hover:bg-indigo-50 transition-colors">
-            Contact Support
-          </button>
-        </div>
+        </section>
       </div>
     </main>
   );

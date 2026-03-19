@@ -44,6 +44,8 @@ func SetupRoutes(
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/refresh", authHandler.RefreshToken)
+			auth.GET("/google/login", authHandler.GoogleLogin)
+			auth.GET("/google/callback", authHandler.GoogleCallback)
 		}
 
 		// Protected auth routes

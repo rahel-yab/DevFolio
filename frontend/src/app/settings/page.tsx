@@ -1,175 +1,146 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAuth } from "../../hooks/useAuth";
+import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { apiService } from "../../services/api";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function SettingsPage() {
-  const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  
-  const [settings, setSettings] = useState({
-    emailNotifications: true,
-    marketingEmails: false,
-    profileVisibility: "public",
-    twoFactorAuth: false,
-  });
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push("/login");
     }
   }, [isAuthenticated, isLoading, router]);
 
-  const handleSettingChange = (setting: string, value: boolean | string) => {
-    setSettings(prev => ({
-      ...prev,
-      [setting]: value
-    }));
+  const handlePasswordSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setMessage(null);
+    setError(null);
+
+    if (newPassword !== confirmPassword) {
+      setError("The new password confirmation does not match.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await apiService.changePassword({
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setMessage("Password updated successfully.");
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Unable to update password.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
+      <main className="flex min-h-[70vh] items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-2 border-[color:var(--accent)] border-t-transparent" />
+      </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
-        {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
-          <p className="text-gray-600">Manage your account preferences and privacy settings</p>
-        </div>
+    <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="shell-card rounded-[2rem] p-8">
+          <span className="eyebrow">Account settings</span>
+          <h1 className="mt-5 text-3xl font-semibold text-slate-950">Keep your account secure</h1>
+          <p className="mt-3 text-sm leading-7 text-slate-700">
+            DevFolio currently supports core account management features: updating profile details, password changes, and logging out from the current session.
+          </p>
 
-        {/* Settings Sections */}
-        <div className="space-y-8">
-          {/* Notifications */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Notifications</h2>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900">Email Notifications</h3>
-                  <p className="text-gray-600 text-sm">Receive notifications about your account activity</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.emailNotifications}
-                    onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900">Marketing Emails</h3>
-                  <p className="text-gray-600 text-sm">Receive updates about new features and tips</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.marketingEmails}
-                    onChange={(e) => handleSettingChange('marketingEmails', e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                </label>
-              </div>
-            </div>
+          <div className="mt-8 rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 p-5">
+            <p className="text-sm font-semibold text-slate-900">Signed in as</p>
+            <p className="mt-2 text-lg text-slate-950">
+              {user.first_name} {user.last_name}
+            </p>
+            <p className="text-sm text-slate-600">{user.email}</p>
           </div>
 
-          {/* Privacy */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Privacy</h2>
-            
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Profile Visibility</h3>
-                <p className="text-gray-600 text-sm mb-4">Control who can see your profile information</p>
-                <select
-                  value={settings.profileVisibility}
-                  onChange={(e) => handleSettingChange('profileVisibility', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                >
-                  <option value="public">Public - Anyone can see your profile</option>
-                  <option value="private">Private - Only you can see your profile</option>
-                  <option value="contacts">Contacts Only - Only your contacts can see</option>
-                </select>
-              </div>
-            </div>
+          <div className="mt-4 flex flex-col gap-3">
+            <Link
+              href="/profile"
+              className="rounded-full border border-[color:var(--line)] bg-white px-5 py-3 text-center text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+            >
+              Edit profile details
+            </Link>
+            <Link
+              href="/dashboard"
+              className="rounded-full border border-[color:var(--line)] bg-white px-5 py-3 text-center text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+            >
+              Back to dashboard
+            </Link>
           </div>
+        </section>
 
-          {/* Security */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Security</h2>
-            
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900">Two-Factor Authentication</h3>
-                  <p className="text-gray-600 text-sm">Add an extra layer of security to your account</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.twoFactorAuth}
-                    onChange={(e) => handleSettingChange('twoFactorAuth', e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                </label>
-              </div>
+        <section className="shell-card rounded-[2rem] p-8">
+          <h2 className="text-2xl font-semibold text-slate-950">Change password</h2>
+          <p className="mt-2 text-sm text-slate-600">Passwords must be at least 8 characters long.</p>
 
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Password</h3>
-                <button className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                  Change Password
-                </button>
-              </div>
-            </div>
-          </div>
+          <form className="mt-8 space-y-5" onSubmit={handlePasswordSubmit}>
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold text-slate-800">Current password</span>
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(event) => setCurrentPassword(event.target.value)}
+                className="w-full rounded-2xl border border-[color:var(--line)] bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-[color:var(--accent)]"
+                required
+              />
+            </label>
 
-          {/* Account Actions */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Account Actions</h2>
-            
-            <div className="space-y-4">
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">Export Data</h3>
-                <p className="text-gray-600 text-sm mb-4">Download a copy of your data including profiles and resumes</p>
-                <button className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                  Export Data
-                </button>
-              </div>
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold text-slate-800">New password</span>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                className="w-full rounded-2xl border border-[color:var(--line)] bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-[color:var(--accent)]"
+                required
+              />
+            </label>
 
-              <div className="border border-red-200 rounded-lg p-4 bg-red-50">
-                <h3 className="font-semibold text-red-900 mb-2">Delete Account</h3>
-                <p className="text-red-700 text-sm mb-4">Permanently delete your account and all associated data. This action cannot be undone.</p>
-                <button className="px-6 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors">
-                  Delete Account
-                </button>
-              </div>
-            </div>
-          </div>
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold text-slate-800">Confirm new password</span>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                className="w-full rounded-2xl border border-[color:var(--line)] bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-[color:var(--accent)]"
+                required
+              />
+            </label>
 
-          {/* Save Button */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <div className="flex justify-end">
-              <button className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
-                Save Settings
-              </button>
-            </div>
-          </div>
-        </div>
+            {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
+            {message && <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</p>}
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-full bg-[color:var(--accent)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[color:var(--accent-strong)] disabled:opacity-60"
+            >
+              {saving ? "Updating..." : "Update password"}
+            </button>
+          </form>
+        </section>
       </div>
     </main>
   );

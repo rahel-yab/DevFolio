@@ -13,7 +13,7 @@ import (
 
 type PortfolioUsecase interface {
 	CreatePortfolio(ctx context.Context, req *entities.CreatePortfolioRequest, userID string) (*entities.Portfolio, error)
-	GetPortfolio(ctx context.Context, id string) (*entities.Portfolio, error)
+	GetPortfolio(ctx context.Context, id string, requesterID string) (*entities.Portfolio, error)
 	GetUserPortfolios(ctx context.Context, userID string) ([]*entities.Portfolio, error)
 	UpdatePortfolio(ctx context.Context, id string, req *entities.UpdatePortfolioRequest, userID string) (*entities.Portfolio, error)
 	DeletePortfolio(ctx context.Context, id string, userID string) error
@@ -61,7 +61,7 @@ func (u *portfolioUsecase) CreatePortfolio(ctx context.Context, req *entities.Cr
 	return portfolio, nil
 }
 
-func (u *portfolioUsecase) GetPortfolio(ctx context.Context, id string) (*entities.Portfolio, error) {
+func (u *portfolioUsecase) GetPortfolio(ctx context.Context, id string, requesterID string) (*entities.Portfolio, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, fmt.Errorf("invalid portfolio ID: %w", err)
@@ -70,6 +70,9 @@ func (u *portfolioUsecase) GetPortfolio(ctx context.Context, id string) (*entiti
 	portfolio, err := u.portfolioRepo.GetByID(ctx, objectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get portfolio: %w", err)
+	}
+	if !portfolio.IsPublic && portfolio.UserID != requesterID {
+		return nil, fmt.Errorf("portfolio is private")
 	}
 
 	return portfolio, nil
