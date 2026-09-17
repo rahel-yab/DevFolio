@@ -7,7 +7,7 @@ import (
 	"devfolio-backend/domain/entities"
 	"devfolio-backend/domain/repositories"
 	"devfolio-backend/infrastructure/ai"
-	
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -51,7 +51,9 @@ func (u *portfolioUsecase) CreatePortfolio(ctx context.Context, req *entities.Cr
 		Projects:   req.Projects,
 		Skills:     req.Skills,
 		Template:   req.Template,
-		IsPublic:   false, // Default to private
+		// A missing JSON boolean remains false, so new portfolios stay private by
+		// default while still honoring an explicit publish selection from the editor.
+		IsPublic: req.IsPublic,
 	}
 
 	if err := u.portfolioRepo.Create(ctx, portfolio); err != nil {
@@ -270,7 +272,7 @@ func (u *portfolioUsecase) EnhanceWithAI(ctx context.Context, req *entities.AIEn
 						techStack += tech
 					}
 				}
-				
+
 				enhancedDesc, err := u.aiClient.GenerateProjectDescription(ctx, project.Name, techStack)
 				if err == nil {
 					portfolio.Projects[i].Description = enhancedDesc
