@@ -26,10 +26,8 @@ export default function Header() {
       return;
     }
 
-    
-
-    await logout();
     setIsMenuOpen(false);
+    await logout();
     router.push("/login");
   };
 
@@ -106,16 +104,18 @@ export default function Header() {
           type="button"
           onClick={() => setIsMenuOpen((value) => !value)}
           className="rounded-full border border-[color:var(--line)] bg-white/80 p-2 md:hidden"
+          aria-expanded={isMenuOpen}
+          aria-controls="mobile-navigation"
         >
           <span className="sr-only">Toggle menu</span>
           <svg className="h-5 w-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 7h16M4 12h16M4 17h16" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={isMenuOpen ? "M6 6l12 12M18 6 6 18" : "M4 7h16M4 12h16M4 17h16"} />
           </svg>
         </button>
       </div>
 
       {isMenuOpen && (
-        <div className="border-t border-[color:var(--line)] bg-[rgba(255,250,242,0.96)] px-4 py-4 md:hidden">
+        <div id="mobile-navigation" className="border-t border-[color:var(--line)] bg-[rgba(255,250,242,0.96)] px-4 py-4 md:hidden">
           <div className="mx-auto flex max-w-7xl flex-col gap-2">
             {links.map((link) => (
               <Link
