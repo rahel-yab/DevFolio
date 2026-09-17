@@ -53,9 +53,16 @@ export default function PublicPortfolioPage() {
     );
   }
 
+  const themeClass = {
+    "creative-grid": "border-fuchsia-200 bg-[linear-gradient(135deg,rgba(255,255,255,0.94),rgba(250,232,255,0.78))]",
+    "classic-profile": "rounded-[1rem] bg-white",
+    "story-column": "max-w-4xl bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(235,248,245,0.85))]",
+    "modern-minimal": "",
+  }[portfolio.template] || "";
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
-      <article className="shell-card rounded-[2.5rem] p-8 sm:p-10">
+      <article className={`shell-card rounded-[2.5rem] p-8 sm:p-10 ${themeClass}`}>
         <header className="border-b border-[color:var(--line)] pb-8">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[color:var(--accent-strong)]">
             Public portfolio
@@ -66,12 +73,12 @@ export default function PublicPortfolioPage() {
             {portfolio.email && <span>{portfolio.email}</span>}
             {portfolio.location && <span>{portfolio.location}</span>}
             {portfolio.website && (
-              <a href={portfolio.website} target="_blank" rel="noreferrer" className="text-[color:var(--accent-strong)] underline-offset-4 hover:underline">
+              <a href={externalUrl(portfolio.website)} target="_blank" rel="noreferrer" className="text-[color:var(--accent-strong)] underline-offset-4 hover:underline">
                 Website
               </a>
             )}
             {portfolio.github && (
-              <a href={portfolio.github} target="_blank" rel="noreferrer" className="text-[color:var(--accent-strong)] underline-offset-4 hover:underline">
+              <a href={externalUrl(portfolio.github)} target="_blank" rel="noreferrer" className="text-[color:var(--accent-strong)] underline-offset-4 hover:underline">
                 GitHub
               </a>
             )}
@@ -99,12 +106,12 @@ export default function PublicPortfolioPage() {
                         <h3 className="text-base font-semibold text-slate-950">{project.name}</h3>
                         <div className="flex gap-3 text-sm">
                           {project.link && (
-                            <a href={project.link} target="_blank" rel="noreferrer" className="text-[color:var(--accent-strong)]">
+                            <a href={externalUrl(project.link)} target="_blank" rel="noreferrer" className="text-[color:var(--accent-strong)]">
                               Demo
                             </a>
                           )}
                           {project.github_link && (
-                            <a href={project.github_link} target="_blank" rel="noreferrer" className="text-[color:var(--accent-strong)]">
+                            <a href={externalUrl(project.github_link)} target="_blank" rel="noreferrer" className="text-[color:var(--accent-strong)]">
                               Source
                             </a>
                           )}
@@ -164,4 +171,8 @@ export default function PublicPortfolioPage() {
       </article>
     </main>
   );
+}
+
+function externalUrl(value: string) {
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
 }
